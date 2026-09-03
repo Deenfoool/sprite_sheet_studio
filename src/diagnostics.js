@@ -37,6 +37,8 @@ async function runDiagnostics() {
   result('CompressionStream', typeof CompressionStream === 'function', typeof CompressionStream);
   result('Project System', Boolean(globalThis.__SSSProject), globalThis.__SSSProject ? 'bridge ready' : 'bridge missing');
   result('Rigging', Boolean(globalThis.__SSSRig), globalThis.__SSSRig ? 'bridge ready' : 'bridge missing');
+  result('Skeletal library', Boolean(globalThis.__SSSSkeletal), globalThis.__SSSSkeletal ? 'bridge ready' : 'bridge missing');
+  result('Rig project persistence', Boolean(globalThis.__SSSRigPersistence), globalThis.__SSSRigPersistence ? 'full .sss integration ready' : 'persistence bridge missing');
   result('IK', Boolean(globalThis.__SSSIK), globalThis.__SSSIK ? 'solver ready' : 'solver missing');
 
   try {
@@ -66,7 +68,8 @@ async function runDiagnostics() {
     checkFetch('./src/page-loader.js', 'Pages loader'),
     checkFetch('./src/multi-atlas.js', 'Multi-atlas module'),
     checkFetch('./src/aseprite-export.js', 'Aseprite exporter'),
-    checkFetch('./src/custom-anchor.js', 'Custom anchor module')
+    checkFetch('./src/custom-anchor.js', 'Custom anchor module'),
+    checkFetch('./src/rig-project-persistence.js', 'Rig project persistence module')
   ]);
 
   return {
