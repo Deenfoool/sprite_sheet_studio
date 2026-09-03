@@ -5,6 +5,7 @@ const toolsModuleUrl = new URL('./sprite-tools.js', import.meta.url).href;
 const extensionUrl = new URL('./editor-extensions.js', import.meta.url);
 const engineExportsUrl = new URL('./engine-exports.js', import.meta.url);
 const aiFixerUrl = new URL('./ai-fixer.js', import.meta.url);
+const uxToolsUrl = new URL('./ux-tools.js', import.meta.url);
 const riggingUrl = new URL('./rigging.js', import.meta.url);
 const skeletalAnimationUrl = new URL('./skeletal-animation.js', import.meta.url);
 const meshUrl = new URL('./mesh.js', import.meta.url);
@@ -56,7 +57,7 @@ function stripMainTypeScript(source) {
     .replace(/^import\s+['"]\.\/smart-tools\.css['"];?\s*$/m, '')
     .replace(/import\s+\{\s*GIFEncoder\s*,\s*quantize\s*,\s*applyPalette\s*\}\s+from\s+['"]gifenc['"];?/, `import { GIFEncoder, quantize, applyPalette } from '${gifModuleUrl}';`)
     .replace(/import\s+\{\s*zipSync\s*\}\s+from\s+['"]fflate['"];?/, `import { zipSync } from '${zipModuleUrl}';`)
-    .replace(/import\s*\{[\s\S]*?\}\s*from\s*['"]\.\/sprite-tools['"];?/, `import { alignCanvases, cloneCanvas, get2d, opaqueBounds, suggestTransparentGrid, trimTransparent } from '${toolsModuleUrl}';`)
+    .replace(/import\s*\{[\s\S]*?\}\s*from\s+['"]\.\/sprite-tools['"];?/, `import { alignCanvases, cloneCanvas, get2d, opaqueBounds, suggestTransparentGrid, trimTransparent } from '${toolsModuleUrl}';`)
     .replace(/type\s+SpriteFrame\s*=\s*\{[\s\S]*?const\s+state\s*:\s*AppState\s*=/, 'const state =')
     .replace(/\bq<[^>]+>/g, 'q')
     .replace(/\.querySelector<[^>]+>/g, '.querySelector')
@@ -96,17 +97,18 @@ async function boot() {
   }
 
   const sourceUrl = new URL('./main-v2.ts', import.meta.url);
-  const [source, extension, engineExports, aiFixer, rigging, skeletalAnimation, mesh, ik] = await Promise.all([
+  const [source, extension, engineExports, aiFixer, uxTools, rigging, skeletalAnimation, mesh, ik] = await Promise.all([
     fetchText(sourceUrl, 'editor source'),
     fetchText(extensionUrl, 'project system'),
     fetchText(engineExportsUrl, 'engine exporters'),
     fetchText(aiFixerUrl, 'AI sprite fixer'),
+    fetchText(uxToolsUrl, 'professional editor tools'),
     fetchText(riggingUrl, 'bone rigging workspace'),
     fetchText(skeletalAnimationUrl, 'skeletal animation editor'),
     fetchText(meshUrl, 'mesh deformation'),
     fetchText(ikUrl, 'inverse kinematics')
   ]);
-  const js = `${stripMainTypeScript(source)}\n\n${exposeProjectBridge(extension)}\n\n${engineExports}\n\n${aiFixer}\n\n${exposeRigBridge(rigging)}\n\n${skeletalAnimation}\n\n${mesh}\n\n${ik}`;
+  const js = `${stripMainTypeScript(source)}\n\n${exposeProjectBridge(extension)}\n\n${engineExports}\n\n${aiFixer}\n\n${uxTools}\n\n${exposeRigBridge(rigging)}\n\n${skeletalAnimation}\n\n${mesh}\n\n${ik}`;
 
   const blobUrl = URL.createObjectURL(new Blob([`${js}\n//# sourceURL=sprite-sheet-studio-runtime.js`], { type: 'text/javascript' }));
   try {
