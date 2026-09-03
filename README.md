@@ -66,6 +66,18 @@ Production build:
 npm run build
 ```
 
+## GitHub Pages
+
+The repository is prepared for **Deploy from a branch** mode.
+
+Use this GitHub Pages configuration:
+
+- Source: `Deploy from a branch`
+- Branch: `main`
+- Folder: `/(root)`
+
+The repository root contains the Pages entrypoint and `.nojekyll`. The previous Actions-based Pages workflow has been removed.
+
 ## Privacy
 
 Imported images are decoded and processed in the browser. Sprite assets are not uploaded to a server by the application.
