@@ -57,7 +57,9 @@ async function runDiagnostics() {
   result('Skeletal library', Boolean(globalThis.__SSSSkeletal), globalThis.__SSSSkeletal ? 'bridge ready' : 'bridge missing');
   result('Skeletal easing persistence', Boolean(globalThis.__SSSSkeletalEasing), globalThis.__SSSSkeletalEasing ? 'easing extension ready' : 'extension missing');
   result('Rig project persistence', Boolean(globalThis.__SSSRigPersistence), globalThis.__SSSRigPersistence ? 'full .sss integration ready' : 'persistence bridge missing');
-  result('IK', Boolean(globalThis.__SSSIK), globalThis.__SSSIK ? 'solver ready' : 'solver missing');
+  result('Multi-chain IK', Boolean(globalThis.__SSSIK?.state?.chains && Array.isArray(globalThis.__SSSIK.state.chains)), globalThis.__SSSIK ? `${globalThis.__SSSIK.state.chains.length} configured chain(s)` : 'solver missing');
+  result('IK pole targets', Boolean(globalThis.__SSSIKPole), globalThis.__SSSIKPole ? 'pole-target runtime ready' : 'pole-target runtime missing');
+  result('IK stretch', Boolean(globalThis.__SSSIKStretch), globalThis.__SSSIKStretch ? 'stretch runtime ready' : 'stretch runtime missing');
   result('Accessibility runtime', Boolean(globalThis.__SSSAccessibility), globalThis.__SSSAccessibility ? 'a11y bridge ready' : 'accessibility module missing');
   result('Skip link', Boolean(document.querySelector('.sss-skip-link')), document.querySelector('.sss-skip-link') ? 'mounted' : 'missing');
   result('Live region', Boolean(document.querySelector('#sss-live-region')), document.querySelector('#sss-live-region') ? 'mounted' : 'missing');
@@ -103,6 +105,8 @@ async function runDiagnostics() {
     checkFetch('./src/animated-webp.js', 'Animated WebP module'),
     checkFetch('./src/unity-package.js', 'Unity package module'),
     checkFetch('./src/skeletal-easing-persistence.js', 'Skeletal easing persistence module'),
+    checkFetch('./src/ik-pole.js', 'IK pole-target module'),
+    checkFetch('./src/ik-stretch.js', 'IK stretch module'),
     checkFetch('./src/accessibility.js', 'Accessibility module'),
     checkFetch('./src/rig-project-persistence.js', 'Rig project persistence module'),
     checkFetch('./scripts/build-runtime-bundle.mjs', 'Committed runtime generator')
