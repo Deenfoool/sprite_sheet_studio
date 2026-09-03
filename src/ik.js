@@ -12,7 +12,9 @@
     minA: -180,
     maxA: 180,
     minB: -180,
-    maxB: 180
+    maxB: 180,
+    lockA: false,
+    lockB: false
   };
 
   function radians(value) { return value * Math.PI / 180; }
@@ -90,6 +92,12 @@
     const selected = chain();
     if (!selected) return;
     const { startBone, endBone } = selected;
+    if (ik.lockA && ik.lockB) {
+      rigApi.draw();
+      updateUi(false);
+      return;
+    }
+
     const cache = new Map();
     const startWorld = worldBone(startBone, cache);
     if (!startWorld) return;
@@ -113,8 +121,9 @@
 
     const startLocal = normalizeDegrees(degrees(angle1 - parentWorldRotation));
     const endLocal = normalizeDegrees(degrees(angle2));
-    startBone.rotation = clamp(startLocal, ik.minA, ik.maxA);
-    endBone.rotation = clamp(endLocal, ik.minB, ik.maxB);
+
+    if (!ik.lockA) startBone.rotation = clamp(startLocal, ik.minA, ik.maxA);
+    if (!ik.lockB) endBone.rotation = clamp(endLocal, ik.minB, ik.maxB);
 
     rigApi.draw();
     updateUi(false);
@@ -165,12 +174,19 @@
       maxB.value = String(ik.maxB);
     }
     enableInput.checked = ik.enabled;
+    lockA.checked = ik.lockA;
+    lockB.checked = ik.lockB;
+    minA.disabled = ik.lockA;
+    maxA.disabled = ik.lockA;
+    minB.disabled = ik.lockB;
+    maxB.disabled = ik.lockB;
     bendLeft.classList.toggle('active', ik.bend < 0);
     bendRight.classList.toggle('active', ik.bend > 0);
     status.classList.toggle('active', ik.enabled);
     if (ik.enabled && chain()) {
       const c = chain();
-      status.textContent = `IK active: ${c.startBone.name} → ${c.endBone.name}. Drag anywhere on the rig canvas to move the target.`;
+      const locks = [ik.lockA ? `${c.startBone.name} locked` : '', ik.lockB ? `${c.endBone.name} locked` : ''].filter(Boolean);
+      status.textContent = `IK active: ${c.startBone.name} → ${c.endBone.name}. Drag on the rig canvas to move the target.${locks.length ? ` ${locks.join(' · ')}.` : ''}`;
     }
   }
 
@@ -196,8 +212,16 @@
     <div class="rig-field"><label>Bend direction / pole</label><div class="ik-direction"><button class="btn" id="ikBendLeft">Left</button><button class="btn active" id="ikBendRight">Right</button></div></div>
     <div class="rig-field"><label>Joint constraints</label>
       <div class="ik-constraints">
-        <div class="ik-constraint-box"><b>Parent bone</b><div class="rig-two"><input id="ikMinA" type="number" value="-180" /><input id="ikMaxA" type="number" value="180" /></div></div>
-        <div class="ik-constraint-box"><b>End bone</b><div class="rig-two"><input id="ikMinB" type="number" value="-180" /><input id="ikMaxB" type="number" value="180" /></div></div>
+        <div class="ik-constraint-box">
+          <b>Parent bone</b>
+          <label class="rig-check compact"><span>Lock rotation</span><input id="ikLockA" type="checkbox" /></label>
+          <div class="rig-two"><input id="ikMinA" type="number" value="-180" /><input id="ikMaxA" type="number" value="180" /></div>
+        </div>
+        <div class="ik-constraint-box">
+          <b>End bone</b>
+          <label class="rig-check compact"><span>Lock rotation</span><input id="ikLockB" type="checkbox" /></label>
+          <div class="rig-two"><input id="ikMinB" type="number" value="-180" /><input id="ikMaxB" type="number" value="180" /></div>
+        </div>
       </div>
     </div>`;
   inspector.append(panel);
@@ -214,6 +238,8 @@
   const maxA = panel.querySelector('#ikMaxA');
   const minB = panel.querySelector('#ikMinB');
   const maxB = panel.querySelector('#ikMaxB');
+  const lockA = panel.querySelector('#ikLockA');
+  const lockB = panel.querySelector('#ikLockB');
   const canvas = document.querySelector('#rigCanvas');
 
   enableInput.addEventListener('change', () => {
@@ -237,6 +263,8 @@
   targetY.addEventListener('change', () => { ik.targetY = Number(targetY.value) || 0; solveIk(); });
   bendLeft.addEventListener('click', () => { ik.bend = -1; updateUi(); solveIk(); });
   bendRight.addEventListener('click', () => { ik.bend = 1; updateUi(); solveIk(); });
+  lockA.addEventListener('change', () => { ik.lockA = lockA.checked; updateUi(); solveIk(); });
+  lockB.addEventListener('change', () => { ik.lockB = lockB.checked; updateUi(); solveIk(); });
 
   function updateConstraints() {
     ik.minA = Number(minA.value);
