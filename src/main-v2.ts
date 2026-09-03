@@ -16,6 +16,7 @@ type SpriteFrame = {
   id: string;
   name: string;
   canvas: HTMLCanvasElement;
+  hold: number;
 };
 
 type PreviewBackground = 'checker' | 'white' | 'black';
@@ -40,6 +41,8 @@ type AppState = {
   zoom: number;
   previewBg: PreviewBackground;
   anchorMode: AnchorMode;
+  onionSkin: boolean;
+  onionOpacity: number;
 };
 
 const state: AppState = {
@@ -61,7 +64,9 @@ const state: AppState = {
   pingPong: false,
   zoom: 4,
   previewBg: 'checker',
-  anchorMode: 'bottom-center'
+  anchorMode: 'bottom-center',
+  onionSkin: false,
+  onionOpacity: 0.24
 };
 
 const app = document.querySelector<HTMLDivElement>('#app');
@@ -206,6 +211,18 @@ app.innerHTML = `
         </div>
 
         <div class="panel-section">
+          <div class="section-head"><h2 class="section-title">Frame animation</h2><span class="section-note">current frame</span></div>
+          <div class="field wide" style="margin-bottom:9px"><label for="holdInput">Frame hold ×<span id="holdValue">1</span></label><input id="holdInput" type="range" min="1" max="8" value="1" /></div>
+          <div class="control-line"><span>Onion skin</span><label class="switch"><input id="onionInput" type="checkbox" /><span></span></label></div>
+          <div class="field wide" id="onionOpacityField"><label for="onionOpacityInput">Ghost opacity <span id="onionOpacityValue">24%</span></label><input id="onionOpacityInput" type="range" min="5" max="60" value="24" /></div>
+          <div class="btn-row transform-row">
+            <button class="btn grow" id="flipXBtn" disabled>Flip X</button>
+            <button class="btn grow" id="flipYBtn" disabled>Flip Y</button>
+            <button class="btn grow" id="rotateBtn" disabled>Rotate 90°</button>
+          </div>
+        </div>
+
+        <div class="panel-section">
           <div class="section-head"><h2 class="section-title">Export</h2><span class="section-note">client-side</span></div>
           <div class="export-grid">
             <button class="btn green export-btn" id="gifBtn" disabled><span>Animated GIF</span><small>loop settings</small></button>
@@ -287,6 +304,14 @@ const el = {
   opaqueSize: q<HTMLSpanElement>('#opaqueSize'),
   anchorInfo: q<HTMLSpanElement>('#anchorInfo'),
   transparentInfo: q<HTMLSpanElement>('#transparentInfo'),
+  hold: q<HTMLInputElement>('#holdInput'),
+  holdValue: q<HTMLSpanElement>('#holdValue'),
+  onion: q<HTMLInputElement>('#onionInput'),
+  onionOpacity: q<HTMLInputElement>('#onionOpacityInput'),
+  onionOpacityValue: q<HTMLSpanElement>('#onionOpacityValue'),
+  flipX: q<HTMLButtonElement>('#flipXBtn'),
+  flipY: q<HTMLButtonElement>('#flipYBtn'),
+  rotate: q<HTMLButtonElement>('#rotateBtn'),
   toast: q<HTMLDivElement>('#toast')
 };
 
@@ -331,7 +356,7 @@ async function loadFiles(fileList: FileList | File[]): Promise<void> {
         const canvas = createCanvas(bitmap.width, bitmap.height);
         get2d(canvas).drawImage(bitmap, 0, 0);
         bitmap.close();
-        return { id: uid(), name: file.name, canvas };
+        return { id: uid(), name: file.name, canvas, hold: 1 };
       });
       state.currentIndex = 0;
       drawSourcePlaceholder();
@@ -385,7 +410,7 @@ function sliceSource(): void {
       const sy = state.paddingY + row * (frameH + state.spacingY);
       const canvas = createCanvas(frameW, frameH);
       get2d(canvas).drawImage(state.source, sx, sy, frameW, frameH, 0, 0, frameW, frameH);
-      frames.push({ id: uid(), name: `frame_${String(index + 1).padStart(2, '0')}.png`, canvas });
+      frames.push({ id: uid(), name: `frame_${String(index + 1).padStart(2, '0')}.png`, canvas, hold: 1 });
       index += 1;
     }
   }
@@ -508,7 +533,8 @@ function advancePlayback(): void {
 
 function tick(now: number): void {
   if (state.playing && state.frames.length) {
-    const delay = 1000 / state.fps;
+    const currentHold = state.frames[state.currentIndex]?.hold ?? 1;
+    const delay = (1000 / state.fps) * currentHold;
     if (now - state.lastAdvance >= delay) {
       state.lastAdvance = now - ((now - state.lastAdvance) % delay);
       advancePlayback();
@@ -550,7 +576,17 @@ function renderPreview(): void {
   const normalized = drawNormalizedFrame(frame);
   el.previewCanvas.width = normalized.width;
   el.previewCanvas.height = normalized.height;
-  get2d(el.previewCanvas).drawImage(normalized, 0, 0);
+  const previewCtx = get2d(el.previewCanvas);
+  previewCtx.clearRect(0, 0, normalized.width, normalized.height);
+  if (state.onionSkin && state.frames.length > 1) {
+    const prevIndex = Math.max(0, state.currentIndex - 1);
+    const nextIndex = Math.min(state.frames.length - 1, state.currentIndex + 1);
+    previewCtx.globalAlpha = state.onionOpacity;
+    if (prevIndex !== state.currentIndex) previewCtx.drawImage(drawNormalizedFrame(state.frames[prevIndex]), 0, 0);
+    if (nextIndex !== state.currentIndex) previewCtx.drawImage(drawNormalizedFrame(state.frames[nextIndex]), 0, 0);
+    previewCtx.globalAlpha = 1;
+  }
+  previewCtx.drawImage(normalized, 0, 0);
   el.previewCanvas.style.width = `${normalized.width * state.zoom}px`;
   el.previewCanvas.style.height = `${normalized.height * state.zoom}px`;
   el.previewCanvas.classList.remove('hidden');
@@ -578,7 +614,7 @@ function renderTimeline(): void {
 
     const foot = document.createElement('div');
     foot.className = 'frame-foot';
-    foot.innerHTML = `<span class="frame-number">#${String(index + 1).padStart(2, '0')}</span><span class="frame-size">${frame.canvas.width}×${frame.canvas.height}</span>`;
+    foot.innerHTML = `<span class="frame-number">#${String(index + 1).padStart(2, '0')}</span><span class="frame-size">${frame.canvas.width}×${frame.canvas.height} · ×${frame.hold}</span>`;
     card.append(thumb, foot);
 
     card.addEventListener('click', () => {
@@ -618,7 +654,7 @@ function renderStats(): void {
   const size = normalizedSize();
   el.frameCount.textContent = String(count);
   el.canvasSize.textContent = count ? `${size.width}×${size.height}` : '—';
-  const duration = count ? playbackSequence().length / state.fps : 0;
+  const duration = count ? playbackSequence().reduce((sum, frameIndex) => sum + (state.frames[frameIndex]?.hold ?? 1), 0) / state.fps : 0;
   el.duration.textContent = count ? `${duration.toFixed(duration < 10 ? 2 : 1)}s` : '—';
   el.timelineInfo.textContent = count ? `  ${count} frame${count === 1 ? '' : 's'} · ${state.fps} FPS` : '  No frames';
   el.sourceName.textContent = state.sourceName;
@@ -646,9 +682,14 @@ function renderStats(): void {
 
   const anchorLabels: Record<AnchorMode, string> = { 'bottom-center': 'Feet', center: 'Center', 'center-mass': 'Mass' };
   el.anchorInfo.textContent = anchorLabels[state.anchorMode];
+  el.hold.value = String(frame?.hold ?? 1);
+  el.holdValue.textContent = String(frame?.hold ?? 1);
+  el.onion.checked = state.onionSkin;
+  el.onionOpacity.value = String(Math.round(state.onionOpacity * 100));
+  el.onionOpacityValue.textContent = `${Math.round(state.onionOpacity * 100)}%`;
 
   const enabled = count > 0;
-  [el.play, el.fit, el.clear, el.trim, el.align, el.duplicate, el.remove, el.reverse, el.gif, el.sheet, el.sequence]
+  [el.play, el.fit, el.clear, el.trim, el.align, el.duplicate, el.remove, el.reverse, el.flipX, el.flipY, el.rotate, el.gif, el.sheet, el.sequence]
     .forEach((button) => { button.disabled = !enabled; });
   el.reslice.disabled = !state.source;
   el.autoSlice.disabled = !state.source;
@@ -664,7 +705,7 @@ function renderAll(): void {
 function duplicateCurrent(): void {
   if (!state.frames.length) return;
   const original = state.frames[state.currentIndex];
-  const duplicate: SpriteFrame = { id: uid(), name: `${original.name.replace(/\.png$/i, '')}_copy.png`, canvas: cloneCanvas(original.canvas) };
+  const duplicate: SpriteFrame = { id: uid(), name: `${original.name.replace(/\.png$/i, '')}_copy.png`, canvas: cloneCanvas(original.canvas), hold: original.hold };
   state.frames.splice(state.currentIndex + 1, 0, duplicate);
   state.currentIndex += 1;
   renderAll();
@@ -683,6 +724,30 @@ function reverseFrames(): void {
   state.frames.reverse();
   state.currentIndex = state.frames.length - 1 - state.currentIndex;
   renderAll();
+}
+
+function transformCurrent(kind: 'flip-x' | 'flip-y' | 'rotate'): void {
+  const frame = state.frames[state.currentIndex];
+  if (!frame) return;
+  stopPlayback();
+  const source = frame.canvas;
+  const rotated = kind === 'rotate';
+  const out = createCanvas(rotated ? source.height : source.width, rotated ? source.width : source.height);
+  const ctx = get2d(out);
+  if (kind === 'flip-x') {
+    ctx.translate(out.width, 0);
+    ctx.scale(-1, 1);
+  } else if (kind === 'flip-y') {
+    ctx.translate(0, out.height);
+    ctx.scale(1, -1);
+  } else {
+    ctx.translate(out.width, 0);
+    ctx.rotate(Math.PI / 2);
+  }
+  ctx.drawImage(source, 0, 0);
+  frame.canvas = out;
+  renderAll();
+  toast(kind === 'rotate' ? 'Frame rotated 90°' : `Frame ${kind === 'flip-x' ? 'flipped horizontally' : 'flipped vertically'}`);
 }
 
 function fitPreview(): void {
@@ -721,7 +786,7 @@ function generateDemo(): void {
     const ctx = get2d(canvas);
     ctx.translate(3 + (index % 2), 4 + offset);
     drawPixelS(ctx, index % 2 ? '#21c79b' : '#1687ff');
-    return { id: uid(), name: `demo_${index + 1}.png`, canvas };
+    return { id: uid(), name: `demo_${index + 1}.png`, canvas, hold: index === 2 ? 2 : 1 };
   });
   state.sourceName = 'Built-in uneven SSS demo';
   state.currentIndex = 0;
@@ -745,8 +810,8 @@ async function exportGif(): Promise<void> {
   try {
     const gif = GIFEncoder();
     const sequence = playbackSequence();
-    const delay = Math.max(20, Math.round(1000 / state.fps));
     sequence.forEach((frameIndex, sequenceIndex) => {
+      const delay = Math.max(20, Math.round((1000 / state.fps) * (state.frames[frameIndex]?.hold ?? 1)));
       const canvas = drawNormalizedFrame(state.frames[frameIndex]);
       const image = get2d(canvas).getImageData(0, 0, canvas.width, canvas.height);
       const palette = quantize(image.data, 256, { format: 'rgba4444', oneBitAlpha: true });
@@ -890,6 +955,24 @@ el.bg.addEventListener('change', () => {
   state.previewBg = el.bg.value as PreviewBackground;
   el.previewSurface.dataset.bg = state.previewBg;
 });
+el.hold.addEventListener('input', () => {
+  const frame = state.frames[state.currentIndex];
+  if (!frame) return;
+  frame.hold = clampInt(el.hold.value, 1, 8);
+  el.holdValue.textContent = String(frame.hold);
+  renderStats();
+  renderTimeline();
+});
+el.onion.addEventListener('change', () => { state.onionSkin = el.onion.checked; renderPreview(); });
+el.onionOpacity.addEventListener('input', () => {
+  state.onionOpacity = clampInt(el.onionOpacity.value, 5, 60) / 100;
+  el.onionOpacityValue.textContent = `${Math.round(state.onionOpacity * 100)}%`;
+  renderPreview();
+});
+el.flipX.addEventListener('click', () => transformCurrent('flip-x'));
+el.flipY.addEventListener('click', () => transformCurrent('flip-y'));
+el.rotate.addEventListener('click', () => transformCurrent('rotate'));
+
 el.gif.addEventListener('click', () => void exportGif());
 el.sheet.addEventListener('click', () => void exportSpriteSheet());
 el.sequence.addEventListener('click', () => void exportSequence());
