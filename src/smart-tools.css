@@ -1,0 +1,91 @@
+.brand-logo {
+  width: 46px;
+  height: 42px;
+  display: block;
+  object-fit: contain;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,.28));
+}
+
+.smart-badge {
+  color: #7ce7c7;
+  border-color: #1f5c51;
+  background: #0c2a28;
+}
+
+.smart-panel {
+  background:
+    radial-gradient(circle at 100% 0, rgba(22,199,154,.09), transparent 36%),
+    rgba(14, 22, 36, .65);
+}
+
+.smart-action {
+  width: 100%;
+  min-height: 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+  border-color: #23524c;
+  background: linear-gradient(145deg, #102c2b, #102338);
+}
+
+.smart-action > span {
+  display: grid;
+  gap: 2px;
+}
+
+.smart-action b {
+  font-size: 11px;
+  color: #b9f4e3;
+}
+
+.smart-action small {
+  font-size: 9px;
+  color: #719c96;
+  font-weight: 600;
+}
+
+.smart-action i {
+  font-style: normal;
+  font-size: 18px;
+  color: #55e0ba;
+  text-shadow: 0 0 14px rgba(85,224,186,.45);
+}
+
+.smart-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #213d45, transparent);
+  margin: 12px 0;
+}
+
+.smart-buttons {
+  margin-top: 10px;
+}
+
+.smart-status {
+  margin-top: 10px;
+  min-height: 32px;
+  padding: 8px 9px;
+  border-radius: 8px;
+  border: 1px solid #1b3540;
+  background: #0a1720;
+  color: #78909e;
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.smart-status b {
+  color: #72d9be;
+}
+
+.preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+@media (max-width: 720px) {
+  .smart-badge { display: none; }
+  .brand-logo { width: 40px; height: 36px; }
+}
