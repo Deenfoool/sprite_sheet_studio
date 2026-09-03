@@ -17,6 +17,21 @@ async function checkFetch(path, name) {
   }
 }
 
+function checkWebpCanvasEncoding() {
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = 2;
+    canvas.height = 2;
+    const ctx = canvas.getContext('2d');
+    ctx?.fillRect(0, 0, 2, 2);
+    const encoded = canvas.toDataURL('image/webp');
+    const ok = encoded.startsWith('data:image/webp');
+    result('Canvas WebP encoding', ok, ok ? 'image/webp supported' : 'browser fell back to another format');
+  } catch (error) {
+    result('Canvas WebP encoding', false, error instanceof Error ? error.message : String(error));
+  }
+}
+
 async function runDiagnostics() {
   checks.length = 0;
 
@@ -31,15 +46,21 @@ async function runDiagnostics() {
     result('Canvas 2D', false, error instanceof Error ? error.message : String(error));
   }
 
+  checkWebpCanvasEncoding();
   result('createImageBitmap', typeof createImageBitmap === 'function', typeof createImageBitmap);
   result('IndexedDB', typeof indexedDB !== 'undefined', typeof indexedDB);
   result('Web Worker', typeof Worker === 'function', typeof Worker);
   result('CompressionStream', typeof CompressionStream === 'function', typeof CompressionStream);
+  result('matchMedia / reduced motion', typeof matchMedia === 'function', typeof matchMedia);
   result('Project System', Boolean(globalThis.__SSSProject), globalThis.__SSSProject ? 'bridge ready' : 'bridge missing');
   result('Rigging', Boolean(globalThis.__SSSRig), globalThis.__SSSRig ? 'bridge ready' : 'bridge missing');
   result('Skeletal library', Boolean(globalThis.__SSSSkeletal), globalThis.__SSSSkeletal ? 'bridge ready' : 'bridge missing');
+  result('Skeletal easing persistence', Boolean(globalThis.__SSSSkeletalEasing), globalThis.__SSSSkeletalEasing ? 'easing extension ready' : 'extension missing');
   result('Rig project persistence', Boolean(globalThis.__SSSRigPersistence), globalThis.__SSSRigPersistence ? 'full .sss integration ready' : 'persistence bridge missing');
   result('IK', Boolean(globalThis.__SSSIK), globalThis.__SSSIK ? 'solver ready' : 'solver missing');
+  result('Accessibility runtime', Boolean(globalThis.__SSSAccessibility), globalThis.__SSSAccessibility ? 'a11y bridge ready' : 'accessibility module missing');
+  result('Skip link', Boolean(document.querySelector('.sss-skip-link')), document.querySelector('.sss-skip-link') ? 'mounted' : 'missing');
+  result('Live region', Boolean(document.querySelector('#sss-live-region')), document.querySelector('#sss-live-region') ? 'mounted' : 'missing');
   result('Source cell selection UI', Boolean(document.querySelector('[data-source-cell-status]')), document.querySelector('[data-source-cell-status]') ? 'mounted' : 'missing');
   result('Object Slice UI', Boolean(document.querySelector('#objectSliceBtn')), document.querySelector('#objectSliceBtn') ? 'mounted' : 'missing');
   result('Cleanup comparison UI', Boolean(document.querySelector('.cleanup-compare')), document.querySelector('.cleanup-compare') ? 'mounted' : 'missing');
@@ -81,6 +102,8 @@ async function runDiagnostics() {
     checkFetch('./src/onion-stack.js', 'Onion stack module'),
     checkFetch('./src/animated-webp.js', 'Animated WebP module'),
     checkFetch('./src/unity-package.js', 'Unity package module'),
+    checkFetch('./src/skeletal-easing-persistence.js', 'Skeletal easing persistence module'),
+    checkFetch('./src/accessibility.js', 'Accessibility module'),
     checkFetch('./src/rig-project-persistence.js', 'Rig project persistence module'),
     checkFetch('./scripts/build-runtime-bundle.mjs', 'Committed runtime generator')
   ]);
