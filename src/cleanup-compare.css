@@ -1,0 +1,129 @@
+.cleanup-compare {
+  position: absolute;
+  inset: 14px;
+  z-index: 14;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid #2a3b54;
+  border-radius: 12px;
+  background: rgba(8, 13, 22, 0.94);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+}
+
+.cleanup-compare.hidden {
+  display: none;
+}
+
+.cleanup-compare-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cleanup-compare-head span {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.cleanup-compare-head b {
+  color: #e8f0fb;
+  font-size: 12px;
+}
+
+.cleanup-compare-head small {
+  color: #7f91aa;
+  font-size: 10px;
+}
+
+.cleanup-compare-close {
+  width: 26px;
+  height: 26px;
+  border: 1px solid #293a53;
+  border-radius: 7px;
+  background: #111b2a;
+  color: #b9c7d9;
+  cursor: pointer;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.cleanup-compare-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid #1e2b3e;
+  border-radius: 9px;
+  background-color: #0b111b;
+  background-image:
+    linear-gradient(45deg, #152030 25%, transparent 25%),
+    linear-gradient(-45deg, #152030 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #152030 75%),
+    linear-gradient(-45deg, transparent 75%, #152030 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+}
+
+.cleanup-compare-canvas {
+  max-width: 92%;
+  max-height: 92%;
+  image-rendering: pixelated;
+}
+
+.cleanup-compare-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #f6d76c;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+.cleanup-compare-divider::after {
+  content: '↔';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #f6d76c;
+  color: #18202d;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cleanup-compare-tag {
+  position: absolute;
+  top: 10px;
+  padding: 4px 7px;
+  border-radius: 6px;
+  background: rgba(7, 12, 19, 0.78);
+  color: #dce7f5;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.cleanup-compare-tag.before {
+  left: 10px;
+}
+
+.cleanup-compare-tag.after {
+  right: 10px;
+}
+
+.cleanup-compare-range {
+  width: 100%;
+  accent-color: #f6d76c;
+}
