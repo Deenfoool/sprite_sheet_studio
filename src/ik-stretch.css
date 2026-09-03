@@ -1,0 +1,26 @@
+.ik-stretch-panel {
+  margin-top: 7px;
+  padding: 7px;
+  border: 1px solid #243a53;
+  border-radius: 7px;
+  background: #09131f;
+}
+
+.ik-stretch-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+  align-items: end;
+  margin-top: 6px;
+}
+
+.ik-stretch-grid .btn {
+  min-height: 30px;
+}
+
+.ik-stretch-readout {
+  margin-top: 6px;
+  color: #657d98;
+  font-size: 8px;
+  line-height: 1.4;
+}
