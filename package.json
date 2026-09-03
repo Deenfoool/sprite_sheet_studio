@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "npm run build:runtime && tsc && vite build",
+    "build:runtime": "node scripts/build-runtime-bundle.mjs && node --check src/runtime.bundle.js",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "npm run typecheck && npm run lint && npm run format:check",
+    "check": "npm run build:runtime && npm run typecheck && npm run lint && npm run format:check",
     "test:install": "playwright install chromium",
     "test:smoke": "playwright test",
     "test:smoke:headed": "playwright test --headed"
