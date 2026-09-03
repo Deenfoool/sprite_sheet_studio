@@ -1,0 +1,32 @@
+.brand-logo {
+  width: 56px;
+  height: 42px;
+  flex: 0 0 auto;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 7px 12px rgba(0, 0, 0, .28));
+}
+
+.empty-brand-lockup {
+  width: min(270px, 78%);
+  margin: 0 auto 18px;
+  padding: 10px 14px;
+  border: 1px solid rgba(138, 162, 191, .14);
+  border-radius: 14px;
+  background: rgba(245, 248, 252, .96);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, .18);
+}
+
+.empty-brand-lockup img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 84px;
+  object-fit: contain;
+}
+
+@media (max-width: 720px) {
+  .brand-logo { width: 48px; height: 36px; }
+  .brand-subtitle { display: none; }
+  .empty-brand-lockup { width: min(220px, 82%); }
+}
