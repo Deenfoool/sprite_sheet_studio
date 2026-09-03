@@ -16,6 +16,7 @@ const riggingUrl = new URL('./rigging.js', import.meta.url);
 const skeletalAnimationUrl = new URL('./skeletal-animation.js', import.meta.url);
 const meshUrl = new URL('./mesh.js', import.meta.url);
 const ikUrl = new URL('./ik.js', import.meta.url);
+const rigProjectPersistenceUrl = new URL('./rig-project-persistence.js', import.meta.url);
 
 function showFatal(error) {
   console.error('[Sprite Sheet Studio] startup failed', error);
@@ -154,9 +155,16 @@ function exposeRigBridge(rigging) {
   return rigging.replace(marker, bridge);
 }
 
+function exposeSkeletalBridge(skeletal) {
+  const marker = '  renderAnimationSelect();\n})();';
+  if (!skeletal.includes(marker)) throw new Error('Skeletal runtime marker was not found.');
+  const bridge = `  function serializeSkeletalLibrary() {\n    return {\n      version: 1,\n      activeName,\n      currentFrame,\n      animations: Object.fromEntries([...library.entries()].map(([name, anim]) => [name, {\n        fps: anim.fps,\n        length: anim.length,\n        loop: anim.loop,\n        interpolation: anim.interpolation,\n        keyframes: Object.fromEntries([...anim.keyframes.entries()].map(([frame, pose]) => [String(frame), clonePose(pose)]))\n      }]))\n    };\n  }\n\n  function restoreSkeletalLibrary(data) {\n    if (!data || data.version !== 1 || !data.animations || typeof data.animations !== 'object') return;\n    playing = false;\n    playBtn.textContent = '▶';\n    library.clear();\n    Object.entries(data.animations).forEach(([name, raw]) => {\n      const anim = newAnimation(name);\n      anim.fps = Math.max(1, Math.min(60, Number(raw.fps) || 12));\n      anim.length = Math.max(1, Math.min(600, Number(raw.length) || 24));\n      anim.loop = raw.loop !== false;\n      anim.interpolation = ['step', 'linear', 'ease'].includes(raw.interpolation) ? raw.interpolation : 'linear';\n      anim.keyframes = new Map(Object.entries(raw.keyframes || {}).map(([frame, pose]) => [Number(frame), clonePose(pose)]).filter(([frame]) => Number.isFinite(frame)));\n      library.set(name, anim);\n    });\n    if (!library.size) library.set('idle', newAnimation('idle'));\n    activeName = library.has(data.activeName) ? data.activeName : library.keys().next().value;\n    currentFrame = Math.max(0, Math.min(animation().length, Number(data.currentFrame) || 0));\n    playhead = currentFrame;\n    renderAnimationSelect();\n    setCurrentFrame(currentFrame, true);\n  }\n\n  function resetSkeletalLibrary() {\n    playing = false;\n    playBtn.textContent = '▶';\n    library.clear();\n    library.set('idle', newAnimation('idle'));\n    activeName = 'idle';\n    currentFrame = 0;\n    playhead = 0;\n    renderAnimationSelect();\n  }\n\n  globalThis.__SSSSkeletal = {\n    serialize: () => serializeSkeletalLibrary(),\n    restore: (data) => restoreSkeletalLibrary(data),\n    reset: () => resetSkeletalLibrary()\n  };\n\n  renderAnimationSelect();\n})();`;
+  return skeletal.replace(marker, bridge);
+}
+
 async function boot() {
   const sourceUrl = new URL('./main-v2.ts', import.meta.url);
-  const [source, extension, customAnchor, engineExports, multiAtlas, apngExport, asepriteExport, aiFixer, uxTools, performanceTools, performanceGuards, rigging, skeletalAnimation, mesh, ik] = await Promise.all([
+  const [source, extension, customAnchor, engineExports, multiAtlas, apngExport, asepriteExport, aiFixer, uxTools, performanceTools, performanceGuards, rigging, skeletalAnimation, mesh, ik, rigProjectPersistence] = await Promise.all([
     fetchText(sourceUrl, 'editor source'),
     fetchText(extensionUrl, 'project system'),
     fetchText(customAnchorUrl, 'custom anchor tools'),
@@ -171,13 +179,14 @@ async function boot() {
     fetchText(riggingUrl, 'bone rigging workspace'),
     fetchText(skeletalAnimationUrl, 'skeletal animation editor'),
     fetchText(meshUrl, 'mesh deformation'),
-    fetchText(ikUrl, 'inverse kinematics')
+    fetchText(ikUrl, 'inverse kinematics'),
+    fetchText(rigProjectPersistenceUrl, 'rig project persistence')
   ]);
 
   const projectExtension = exposeProjectBridge(patchProjectExtension(extension));
   const rigRuntime = exposeRigBridge(patchRiggingScale(rigging));
-  const skeletalRuntime = patchSkeletalScale(skeletalAnimation);
-  const js = `${stripMainTypeScript(source)}\n\n${projectExtension}\n\n${customAnchor}\n\n${engineExports}\n\n${multiAtlas}\n\n${apngExport}\n\n${asepriteExport}\n\n${aiFixer}\n\n${uxTools}\n\n${performanceTools}\n\n${performanceGuards}\n\n${rigRuntime}\n\n${skeletalRuntime}\n\n${mesh}\n\n${ik}`;
+  const skeletalRuntime = exposeSkeletalBridge(patchSkeletalScale(skeletalAnimation));
+  const js = `${stripMainTypeScript(source)}\n\n${projectExtension}\n\n${customAnchor}\n\n${engineExports}\n\n${multiAtlas}\n\n${apngExport}\n\n${asepriteExport}\n\n${aiFixer}\n\n${uxTools}\n\n${performanceTools}\n\n${performanceGuards}\n\n${rigRuntime}\n\n${skeletalRuntime}\n\n${mesh}\n\n${ik}\n\n${rigProjectPersistence}`;
 
   const blobUrl = URL.createObjectURL(new Blob([`${js}\n//# sourceURL=sprite-sheet-studio-runtime.js`], { type: 'text/javascript' }));
   try {
