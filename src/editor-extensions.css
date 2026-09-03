@@ -1,0 +1,69 @@
+.project-name-input {
+  width: 150px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #0a1220;
+  color: var(--text);
+  padding: 0 9px;
+  font-size: 11px;
+  font-weight: 700;
+  outline: none;
+}
+.project-name-input:focus { border-color: #287fd0; box-shadow: 0 0 0 2px rgba(22,135,255,.12); }
+.project-status { min-width: 70px; color: #6f829b; font-size: 9px; text-align: right; }
+.project-status.saved { color: #71d9bb; }
+.project-status.saving { color: #82bfff; }
+.project-status.error { color: #ff8da0; }
+.history-btn { min-width: 34px; padding: 0 8px; }
+
+.animation-manager {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.animation-manager .select { width: 128px; height: 30px; font-size: 10px; }
+.animation-manager .btn { min-height: 30px; height: 30px; padding: 0 8px; }
+.animation-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  border: 1px solid #24415d;
+  background: #0d2032;
+  color: #75bcf5;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .03em;
+}
+
+.advanced-tools-panel .section-note { color: #70a8cf; }
+.nudge-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 34px);
+  grid-template-rows: repeat(3, 30px);
+  justify-content: center;
+  gap: 4px;
+  margin: 10px 0;
+}
+.nudge-grid .btn { min-height: 30px; padding: 0; }
+.nudge-grid .blank { visibility: hidden; }
+.advanced-tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.scale-line { display: grid; grid-template-columns: 1fr auto; gap: 7px; margin-top: 8px; }
+.scale-line .select { height: 34px; }
+
+.project-file-input { display: none; }
+
+@media (max-width: 980px) {
+  .project-name-input { width: 120px; }
+  .project-status { display: none; }
+}
+
+@media (max-width: 720px) {
+  .project-name-input { width: 105px; }
+  .top-actions .history-btn { display: none; }
+  .animation-manager .select { width: 100px; }
+  .animation-manager .animation-pill { display: none; }
+}
