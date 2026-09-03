@@ -29,10 +29,13 @@
 .ai-report-row.warn b { color: #ffd073; }
 .ai-report-row.bad b { color: #ff8da0; }
 .ai-fixer-note { margin-top: 7px; color: #647891; font-size: 9px; line-height: 1.45; }
+
 .frame-card.diagnostic-warning { border-color: #b88427 !important; box-shadow: 0 0 0 2px rgba(255,195,73,.1); }
 .frame-card.diagnostic-error { border-color: #b7485e !important; box-shadow: 0 0 0 2px rgba(255,100,124,.12); }
+.frame-card.diagnostic-duplicate { border-color: #745bbd !important; box-shadow: 0 0 0 2px rgba(155,124,255,.12); }
 .frame-card.diagnostic-warning::after,
-.frame-card.diagnostic-error::after {
+.frame-card.diagnostic-error::after,
+.frame-card.diagnostic-duplicate::after {
   content: '!';
   position: absolute;
   right: 5px;
@@ -48,6 +51,39 @@
   color: #ffe3a2;
 }
 .frame-card.diagnostic-error::after { background: #682c38; color: #ffb3c0; }
+.frame-card.diagnostic-duplicate::after { content: '='; background: #493878; color: #d9caff; }
 .frame-card { position: relative; }
+
 .ai-tolerance-line { display: grid; grid-template-columns: 1fr 44px; gap: 6px; align-items: center; margin-top: 7px; }
 .ai-tolerance-line input[type="number"] { height: 30px; }
+
+.ai-heatmap {
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px solid #20344b;
+  border-radius: 8px;
+  background: #08111c;
+}
+.ai-heatmap[hidden] { display: none; }
+.ai-heatmap-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 7px;
+  color: #8ca0b9;
+  font-size: 9px;
+}
+.ai-heatmap-head span { color: #b9c8dc; font-weight: 800; }
+.ai-heatmap-head small { max-width: 150px; color: #647b96; font-size: 8px; text-align: right; line-height: 1.35; }
+#aiSimilarityHeatmap {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  margin: 0 auto;
+  image-rendering: pixelated;
+  border-radius: 4px;
+  cursor: crosshair;
+  background: #070d15;
+}
