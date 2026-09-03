@@ -8,7 +8,7 @@ Sprite Sheet Studio — local-first браузерный редактор для
 
 ## Статусы
 
-- ✅ **DONE** — основная рабочая версия уже есть.
+- ✅ **DONE** — основная рабочая версия функции уже есть.
 - 🟡 **PARTIAL** — рабочая база есть, но нужны улучшения.
 - ⬜ **TODO** — ещё не реализовано.
 
@@ -20,7 +20,7 @@ Sprite Sheet Studio — local-first браузерный редактор для
 
 ✅ Vanilla TypeScript / Canvas 2D editor.
 
-✅ GitHub Pages через `main / (root)`.
+✅ GitHub Pages через `main / (root)` и **Deploy from a branch**.
 
 ✅ Client-side image processing.
 
@@ -32,19 +32,25 @@ Sprite Sheet Studio — local-first браузерный редактор для
 
 ✅ Runtime Diagnostics / smoke checks прямо на Pages.
 
-⬜ ESLint / Prettier и более строгий CI.
+✅ ESLint / Prettier configuration.
 
-⬜ Нормальный committed production bundle без runtime TypeScript stripping.
+✅ `npm run check` для typecheck + lint + format check.
+
+✅ Playwright browser smoke suite и test fixtures.
+
+🟡 Генератор committed runtime bundle и workflow подготовлены, но GitHub Actions в репозитории пока не запускаются.
+
+⬜ Переключить production Pages с runtime TypeScript stripping на подтверждённый committed bundle.
 
 ### Главный архитектурный долг
 
-Pages сейчас полностью автономен от CDN, но `page-loader.js` всё ещё преобразует `main-v2.ts` в браузере. Перед стабильным 1.0 это нужно заменить обычным production bundle, сохранив **Deploy from a branch**.
+Текущий Pages runtime полностью автономен от CDN, но `page-loader.js` всё ещё преобразует `main-v2.ts` в браузере. Генератор bundle уже подготовлен; переключение будет сделано только после появления надёжного способа собирать и проверять committed bundle без риска снова уронить Pages.
 
 ---
 
 # Phase 1 — MVP: Sprite Sheet → Animation — ✅ DONE
 
-✅ PNG / WebP.
+✅ PNG / WebP import.
 
 ✅ Drag & drop / clipboard.
 
@@ -64,15 +70,15 @@ Pages сейчас полностью автономен от CDN, но `page-lo
 
 ✅ Pixel-perfect zoom.
 
-✅ Checker / white / black / **custom color preview background**.
+✅ Checker / white / black / custom preview background.
 
 ✅ GIF / PNG sequence / sprite sheet PNG.
 
 ---
 
-# Phase 2 — Smart Slicing — 🟡 PARTIAL
+# Phase 2 — Smart Slicing — ✅ DONE
 
-✅ Анализ прозрачных gutters.
+✅ Анализ transparent gutters.
 
 ✅ Auto Slice для регулярных transparent sheets.
 
@@ -80,19 +86,27 @@ Pages сейчас полностью автономен от CDN, но `page-lo
 
 ✅ Manual correction fallback.
 
-✅ Natural sorting и frame normalization.
+✅ Bounding-box analysis.
 
-🟡 Bounding-box анализ уже используется в cleanup и diagnostics.
+✅ Source-cell selection: отдельные grid cells можно включать/исключать кликом по исходному листу.
 
-⬜ Connected-component/object detection для sheet без прозрачных разделителей.
+✅ Connected-component **Object Slice** для листов без прозрачной сетки.
 
-⬜ Irregular cells с разным размером кадров.
+✅ Transparent-background object detection.
+
+✅ Flat-background object detection с настраиваемым tolerance.
+
+✅ Irregular object bounds / кадры разного размера.
+
+✅ Merge gap / minimum object size controls.
 
 ---
 
-# Phase 3 — Sprite Cleanup — 🟡 PARTIAL
+# Phase 3 — Sprite Cleanup — ✅ DONE
 
 ✅ Trim transparent edges всей анимации.
+
+✅ `Trim current` в Smart Tools.
 
 ✅ Shared normalized canvas.
 
@@ -104,7 +118,7 @@ Pages сейчас полностью автономен от CDN, но `page-lo
 
 ✅ Center of mass.
 
-✅ **Custom per-frame anchor**, выбираемый мышью на preview.
+✅ Custom per-frame anchor, выбираемый мышью на preview.
 
 ✅ Copy custom anchor to all.
 
@@ -112,9 +126,7 @@ Pages сейчас полностью автономен от CDN, но `page-lo
 
 ✅ Custom anchors сохраняются в autosave и `.sss`.
 
-⬜ Before / after split preview.
-
-⬜ Отдельная команда `Trim current frame` в Smart Tools (crop current уже есть в Advanced Tools).
+✅ **Before / After split preview** после Trim / Auto Align.
 
 ---
 
@@ -125,6 +137,8 @@ Pages сейчас полностью автономен от CDN, но `page-lo
 ✅ Массовый hold.
 
 ✅ Previous / next onion skin + opacity.
+
+✅ Multi-frame onion stack до нескольких соседних кадров с opacity falloff.
 
 ✅ Flip X / Flip Y / Rotate 90°.
 
@@ -140,13 +154,11 @@ Pages сейчас полностью автономен от CDN, но `page-lo
 
 ✅ Keyboard navigation.
 
-🟡 Multi-frame onion stack можно добавить позже.
-
 ---
 
 # Phase 5 — Project System — ✅ DONE
 
-✅ Несколько animation clips.
+✅ Несколько frame animation clips.
 
 ✅ Custom animation names.
 
@@ -160,11 +172,17 @@ Pages сейчас полностью автономен от CDN, но `page-lo
 
 ✅ Ctrl/Cmd shortcuts.
 
-✅ Custom frame anchors входят в project persistence.
+✅ Custom frame anchors в project persistence.
+
+✅ Rig body-part images в полном `.sss`.
+
+✅ Skeletal animation library в полном `.sss`.
+
+✅ Skeletal easing / cubic-bezier settings в полном `.sss`.
 
 ---
 
-# Phase 6 — Extended Export — 🟡 PARTIAL
+# Phase 6 — Extended Export — ✅ DONE
 
 ## Formats
 
@@ -172,19 +190,19 @@ Pages сейчас полностью автономен от CDN, но `page-lo
 
 ✅ APNG.
 
+✅ **Animated WebP** с локальным RIFF/ANIM/ANMF muxer.
+
 ✅ Sprite sheet PNG.
 
 ✅ PNG sequence ZIP.
 
 ✅ Atlas PNG + JSON.
 
-✅ **Paged Multi-atlas PNG + manifest JSON** для больших проектов.
+✅ Paged Multi-atlas PNG + manifest JSON.
 
 ✅ Generic metadata JSON.
 
 ✅ Aseprite-compatible atlas JSON + `frameTags`.
-
-⬜ Animated WebP.
 
 ## Engines
 
@@ -208,7 +226,7 @@ Pages сейчас полностью автономен от CDN, но `page-lo
 
 ✅ Slicing / animation metadata helper JSON.
 
-⬜ Генерируемый Unity Editor importer script/package.
+✅ **Unity package ZIP** с atlas, metadata и `Editor/SpriteSheetStudioImporter.cs`.
 
 ---
 
@@ -228,7 +246,7 @@ Pages сейчас полностью автономен от CDN, но `page-lo
 
 ✅ Part pivot / offset / rotation.
 
-✅ **Part Scale X / Scale Y**.
+✅ Part Scale X / Scale Y.
 
 ✅ Z-order / opacity / visibility.
 
@@ -242,21 +260,27 @@ Pages сейчас полностью автономен от CDN, но `page-lo
 
 ✅ Bone position / rotation / length keyframes.
 
-✅ Sprite position / rotation / **scale X/Y** / opacity / visibility keyframes.
+✅ Sprite position / rotation / scale X/Y / opacity / visibility keyframes.
 
 ✅ Timeline scrub / playback.
 
 ✅ FPS / clip length / loop.
 
-✅ Step / Linear / Ease interpolation.
+✅ Step / Linear / Smooth Ease.
+
+✅ Ease In / Ease Out presets.
+
+✅ **Cubic Bezier interpolation** с editable `x1/y1/x2/y2`.
+
+✅ Curve preview editor.
+
+✅ Easing settings persist in `.sss`.
 
 ✅ Copy / paste pose.
 
 ✅ Duplicate / mirror animation.
 
 ✅ Skeletal animation library export.
-
-⬜ Curve editor / Bezier easing.
 
 ⬜ Track-oriented timeline с отдельными bone/property lanes.
 
@@ -274,7 +298,7 @@ Pages сейчас полностью автономен от CDN, но `page-lo
 
 ✅ Min / max constraints.
 
-✅ **Independent Lock Rotation** для parent/end joint.
+✅ Independent Lock Rotation для parent/end joint.
 
 ✅ IK pose можно сохранить keyframe.
 
@@ -312,7 +336,7 @@ Pages сейчас полностью автономен от CDN, но `page-lo
 
 # Phase 11 — AI Sprite Sheet Fixer — ✅ MVP DONE
 
-Базовый fixer работает полностью локально без AI API.
+Базовый fixer работает локально без AI API.
 
 ✅ Auto Slice integration.
 
@@ -327,6 +351,8 @@ Pages сейчас полностью автономен от CDN, но `page-lo
 ✅ Bad-loop warning.
 
 ✅ Ping-pong suggestion.
+
+✅ Object Slice может использоваться как локальный segmentation fallback.
 
 ⬜ Optional generative repair / inpainting через AI API.
 
@@ -356,6 +382,10 @@ Pages сейчас полностью автономен от CDN, но `page-lo
 
 ✅ Custom preview background picker.
 
+✅ Source sheet cell selection.
+
+✅ Before / After cleanup comparison.
+
 ⬜ Named guide manager.
 
 ⬜ Custom shortcut editor.
@@ -370,7 +400,7 @@ Pages сейчас полностью автономен от CDN, но `page-lo
 
 ✅ GIF encoding в Web Worker.
 
-✅ **APNG encoding/compression в Web Worker** с fallback.
+✅ APNG encoding/compression в Web Worker с fallback.
 
 ✅ Export progress.
 
@@ -380,7 +410,7 @@ Pages сейчас полностью автономен от CDN, но `page-lo
 
 ✅ Single-atlas dimension/pixel guard.
 
-✅ **Paged Multi-atlas** вместо отказа для больших проектов.
+✅ Paged Multi-atlas вместо отказа для больших проектов.
 
 ✅ Compact timeline thumbnail canvases.
 
@@ -388,7 +418,7 @@ Pages сейчас полностью автономен от CDN, но `page-lo
 
 ✅ Object URL cleanup.
 
-⬜ Animated WebP worker после появления стабильного encoder.
+🟡 Animated WebP работает; muxing пока выполняется в main thread.
 
 ⬜ Lazy decoding очень больших sprite sheets.
 
@@ -418,33 +448,41 @@ Backend остаётся необязательным.
 
 ---
 
-# Phase 15 — Release Engineering — 🟡 STARTED
+# Phase 15 — Release Engineering — 🟡 IN PROGRESS
 
-✅ Встроенный **Diagnostics** dialog.
+✅ Встроенный Diagnostics dialog.
 
 ✅ `?selftest=1` для быстрого smoke check опубликованного Pages.
 
-✅ Проверки Canvas / IndexedDB / Worker / CompressionStream.
+✅ Canvas / IndexedDB / Worker / CompressionStream checks.
 
 ✅ Проверки local GIF / ZIP runtime.
 
-✅ Проверки наличия worker/export assets.
+✅ Проверки worker/export/runtime assets.
 
 ✅ Export diagnostics report JSON.
 
-⬜ Убрать runtime TypeScript stripping.
+✅ ESLint / Prettier configuration.
 
-⬜ Настроить lint / formatting.
+✅ `npm run check`.
 
-⬜ Automated browser smoke tests.
+✅ Automated Playwright browser smoke suite.
 
-⬜ Test sprite fixtures.
+✅ Test sprite fixtures.
 
-⬜ Browser compatibility matrix.
+✅ Smoke-тесты загрузки, slicing, Object Slice, cell selection, cleanup comparison, exports, `.sss`, rigging и diagnostics.
+
+✅ Release checklist.
+
+🟡 Committed production bundle generator/workflow подготовлен, но Actions в репозитории сейчас не запускаются.
+
+⬜ Перевести Pages на committed production bundle без runtime TS stripping.
+
+⬜ Browser compatibility matrix и ручной cross-browser pass.
 
 ⬜ Accessibility pass.
 
-⬜ License.
+⬜ Выбрать license.
 
 ⬜ Semantic versioning / CHANGELOG.
 
@@ -456,30 +494,30 @@ Backend остаётся необязательным.
 
 ## Release 0.4 — Stabilization
 
-1. Убрать runtime TypeScript stripping и сделать стабильный committed production bundle для `Deploy from a branch`.
-2. Добавить automated browser smoke tests поверх уже существующего Diagnostics/selftest.
-3. Добавить test sprite fixtures.
-4. Сделать browser compatibility pass.
-5. Добавить license/versioning/changelog.
+1. Перевести Pages на проверенный committed production bundle без runtime TypeScript stripping.
+2. Browser compatibility pass: Chromium / Firefox / WebKit.
+3. Accessibility pass: keyboard focus, labels, contrast, reduced motion.
+4. CHANGELOG + release versioning.
+5. Выбрать license перед публичным стабильным релизом.
 
 ## Release 0.5 — Rigging polish
 
-1. Curve editor.
+1. Track-oriented skeletal timeline.
 2. Multiple IK chains.
-3. Better mesh editor.
-4. Rig + skeletal library persistence внутри `.sss`.
+3. Dedicated pole targets / stretch behavior.
+4. Better mesh topology / weights UI.
 5. Better rig/game-engine export.
 
 ## Release 1.0
 
 Цель первого стабильного релиза:
 
-- sprite sheet / frame workflow;
+- sprite sheet / frame / Object Slice workflow;
 - cleanup / Auto Align / custom anchors;
 - animation editor;
-- local projects;
-- GIF / APNG / PNG / atlas / multi-atlas exports;
-- Godot / Phaser / Unity metadata;
+- local full-project `.sss` persistence;
+- GIF / APNG / WebP / PNG / atlas / multi-atlas exports;
+- Godot / Phaser / Unity package exports;
 - basic rigging + skeletal animation + IK + mesh MVP;
 - stable GitHub Pages build;
 - documented browser support;
