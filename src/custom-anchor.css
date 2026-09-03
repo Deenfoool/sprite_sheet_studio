@@ -1,0 +1,25 @@
+.custom-anchor-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.custom-anchor-controls small {
+  grid-column: 1 / -1;
+  color: #7f91aa;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.custom-anchor-controls[hidden] {
+  display: none;
+}
+
+#previewCanvas {
+  cursor: default;
+}
+
+body:has(#customAnchorPickBtn.primary) #previewCanvas {
+  cursor: crosshair;
+}
