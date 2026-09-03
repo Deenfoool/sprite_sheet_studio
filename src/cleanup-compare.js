@@ -1,14 +1,21 @@
-const previewSurface = document.querySelector('#previewSurface');
-const previewCanvas = document.querySelector('#previewCanvas');
-const trimButton = document.querySelector('#trimBtn');
-const alignButton = document.querySelector('#alignBtn');
+let cleanupCompareInitialized = false;
 
-if (
-  previewSurface instanceof HTMLElement &&
-  previewCanvas instanceof HTMLCanvasElement &&
-  trimButton instanceof HTMLButtonElement &&
-  alignButton instanceof HTMLButtonElement
-) {
+function initCleanupCompare() {
+  if (cleanupCompareInitialized) return true;
+  const previewSurface = document.querySelector('#previewSurface');
+  const previewCanvas = document.querySelector('#previewCanvas');
+  const trimButton = document.querySelector('#trimBtn');
+  const alignButton = document.querySelector('#alignBtn');
+
+  if (
+    !(previewSurface instanceof HTMLElement) ||
+    !(previewCanvas instanceof HTMLCanvasElement) ||
+    !(trimButton instanceof HTMLButtonElement) ||
+    !(alignButton instanceof HTMLButtonElement)
+  ) return false;
+
+  cleanupCompareInitialized = true;
+
   const overlay = document.createElement('div');
   overlay.className = 'cleanup-compare hidden';
   overlay.innerHTML = `
@@ -112,4 +119,13 @@ if (
     if (previewCanvas.classList.contains('hidden')) overlay.classList.add('hidden');
   });
   observer.observe(previewCanvas, { attributes: true, attributeFilter: ['class'] });
+  return true;
+}
+
+if (!initCleanupCompare()) {
+  const timer = window.setInterval(() => {
+    if (!initCleanupCompare()) return;
+    window.clearInterval(timer);
+  }, 100);
+  window.setTimeout(() => window.clearInterval(timer), 15000);
 }
