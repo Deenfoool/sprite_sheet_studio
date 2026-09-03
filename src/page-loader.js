@@ -99,6 +99,47 @@ function patchProjectExtension(extension) {
   return code;
 }
 
+function patchRiggingScale(rigging) {
+  let code = rigging;
+  const uiNeedle = `            <div class="rig-three">\n              <div class="rig-field"><label>Rotation °</label><input id="rigPartRotation" type="number" step="1" /></div>\n              <div class="rig-field"><label>Z order</label><input id="rigPartZ" type="number" step="1" /></div>\n              <div class="rig-field"><label>Opacity</label><input id="rigPartOpacity" type="number" min="0" max="1" step="0.05" /></div>\n            </div>`;
+  const refsNeedle = `    partRotation: overlay.querySelector('#rigPartRotation'),\n    partZ: overlay.querySelector('#rigPartZ'),`;
+  const inspectNeedle = `      r.partRotation.value = String(part.rotation);\n      r.partZ.value = String(part.z);`;
+  const drawNeedle = `    ctx.rotate(world.rotation + radians(part.rotation));\n    ctx.imageSmoothingEnabled = false;`;
+  const loadNeedle = `        rotation: 0,\n        z: rig.parts.length,`;
+  const exportNeedle = `        rotation: part.rotation,\n        z: part.z,`;
+  const updateNeedle = `      part.rotation = Number(r.partRotation.value) || 0;\n      part.z = Number(r.partZ.value) || 0;`;
+  const inputsNeedle = `[r.partName, r.partBone, r.partX, r.partY, r.partPivotX, r.partPivotY, r.partRotation, r.partZ, r.partOpacity, r.partVisible]`;
+
+  const markers = [uiNeedle, refsNeedle, inspectNeedle, drawNeedle, loadNeedle, exportNeedle, updateNeedle, inputsNeedle];
+  if (markers.some((marker) => !code.includes(marker))) throw new Error('Rigging scale patch markers were not found.');
+
+  code = code
+    .replace(uiNeedle, `${uiNeedle}\n            <div class="rig-two">\n              <div class="rig-field"><label>Scale X</label><input id="rigPartScaleX" type="number" min="-10" max="10" step="0.05" value="1" /></div>\n              <div class="rig-field"><label>Scale Y</label><input id="rigPartScaleY" type="number" min="-10" max="10" step="0.05" value="1" /></div>\n            </div>`)
+    .replace(refsNeedle, `    partRotation: overlay.querySelector('#rigPartRotation'),\n    partScaleX: overlay.querySelector('#rigPartScaleX'),\n    partScaleY: overlay.querySelector('#rigPartScaleY'),\n    partZ: overlay.querySelector('#rigPartZ'),`)
+    .replace(inspectNeedle, `      r.partRotation.value = String(part.rotation);\n      r.partScaleX.value = String(part.scaleX ?? 1);\n      r.partScaleY.value = String(part.scaleY ?? 1);\n      r.partZ.value = String(part.z);`)
+    .replace(drawNeedle, `    ctx.rotate(world.rotation + radians(part.rotation));\n    ctx.scale(part.scaleX ?? 1, part.scaleY ?? 1);\n    ctx.imageSmoothingEnabled = false;`)
+    .replace(loadNeedle, `        rotation: 0,\n        scaleX: 1,\n        scaleY: 1,\n        z: rig.parts.length,`)
+    .replace(exportNeedle, `        rotation: part.rotation,\n        scaleX: part.scaleX ?? 1,\n        scaleY: part.scaleY ?? 1,\n        z: part.z,`)
+    .replace(updateNeedle, `      part.rotation = Number(r.partRotation.value) || 0;\n      part.scaleX = Number.isFinite(Number(r.partScaleX.value)) ? Number(r.partScaleX.value) : 1;\n      part.scaleY = Number.isFinite(Number(r.partScaleY.value)) ? Number(r.partScaleY.value) : 1;\n      part.z = Number(r.partZ.value) || 0;`)
+    .replace(inputsNeedle, `[r.partName, r.partBone, r.partX, r.partY, r.partPivotX, r.partPivotY, r.partRotation, r.partScaleX, r.partScaleY, r.partZ, r.partOpacity, r.partVisible]`);
+
+  return code;
+}
+
+function patchSkeletalScale(skeletal) {
+  let code = skeletal;
+  const captureNeedle = `        rotation: part.rotation,\n        z: part.z,`;
+  const applyNeedle = `      part.rotation = value.rotation;\n      part.z = value.z;`;
+  const mirrorNeedle = `    Object.values(mirrored.parts || {}).forEach((part) => {\n      part.x = -part.x;\n      part.rotation = -part.rotation;\n    });`;
+  if (!code.includes(captureNeedle) || !code.includes(applyNeedle) || !code.includes(mirrorNeedle)) {
+    throw new Error('Skeletal scale patch markers were not found.');
+  }
+  return code
+    .replace(captureNeedle, `        rotation: part.rotation,\n        scaleX: part.scaleX ?? 1,\n        scaleY: part.scaleY ?? 1,\n        z: part.z,`)
+    .replace(applyNeedle, `      part.rotation = value.rotation;\n      part.scaleX = Number.isFinite(value.scaleX) ? value.scaleX : 1;\n      part.scaleY = Number.isFinite(value.scaleY) ? value.scaleY : 1;\n      part.z = value.z;`)
+    .replace(mirrorNeedle, `    Object.values(mirrored.parts || {}).forEach((part) => {\n      part.x = -part.x;\n      part.rotation = -part.rotation;\n      part.scaleX = -(part.scaleX ?? 1);\n    });`);
+}
+
 function exposeProjectBridge(extension) {
   const marker = '  void restoreAutosave();\n})();';
   if (!extension.includes(marker)) throw new Error('Project System runtime marker was not found.');
@@ -134,7 +175,9 @@ async function boot() {
   ]);
 
   const projectExtension = exposeProjectBridge(patchProjectExtension(extension));
-  const js = `${stripMainTypeScript(source)}\n\n${projectExtension}\n\n${customAnchor}\n\n${engineExports}\n\n${multiAtlas}\n\n${apngExport}\n\n${asepriteExport}\n\n${aiFixer}\n\n${uxTools}\n\n${performanceTools}\n\n${performanceGuards}\n\n${exposeRigBridge(rigging)}\n\n${skeletalAnimation}\n\n${mesh}\n\n${ik}`;
+  const rigRuntime = exposeRigBridge(patchRiggingScale(rigging));
+  const skeletalRuntime = patchSkeletalScale(skeletalAnimation);
+  const js = `${stripMainTypeScript(source)}\n\n${projectExtension}\n\n${customAnchor}\n\n${engineExports}\n\n${multiAtlas}\n\n${apngExport}\n\n${asepriteExport}\n\n${aiFixer}\n\n${uxTools}\n\n${performanceTools}\n\n${performanceGuards}\n\n${rigRuntime}\n\n${skeletalRuntime}\n\n${mesh}\n\n${ik}`;
 
   const blobUrl = URL.createObjectURL(new Blob([`${js}\n//# sourceURL=sprite-sheet-studio-runtime.js`], { type: 'text/javascript' }));
   try {
