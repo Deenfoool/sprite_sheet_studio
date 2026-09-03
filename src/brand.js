@@ -8,8 +8,8 @@ function initBrandAssets() {
   initialized = true;
 
   brandLogo.src = './assets/brand/logo-mark.svg';
-  brandLogo.alt = 'Sprite Sheet Studio';
-  brandLogo.removeAttribute('aria-hidden');
+  brandLogo.alt = '';
+  brandLogo.setAttribute('aria-hidden', 'true');
 
   if (!emptyPreview.querySelector('.empty-brand-lockup')) {
     const lockup = document.createElement('div');
