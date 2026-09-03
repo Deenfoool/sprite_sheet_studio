@@ -54,9 +54,10 @@
 
   function serializeExtras() {
     return {
-      version: 1,
+      version: 2,
       rigging: serialize(),
       skeletal: globalThis.__SSSSkeletal?.serialize?.() ?? null,
+      ik: globalThis.__SSSIK?.serialize?.() ?? null,
       savedAt: new Date().toISOString()
     };
   }
@@ -114,11 +115,13 @@
   }
 
   async function restoreExtras(extras) {
-    if (!extras || extras.version !== 1) return;
+    if (!extras || ![1, 2].includes(extras.version)) return;
     restoringExtras = true;
     try {
       if (extras.rigging) await restore(extras.rigging);
       if (extras.skeletal) globalThis.__SSSSkeletal?.restore?.(extras.skeletal);
+      if (extras.ik) globalThis.__SSSIK?.restore?.(extras.ik);
+      else globalThis.__SSSIK?.reset?.();
     } finally {
       restoringExtras = false;
     }
@@ -224,6 +227,7 @@
         const extras = serializeExtras();
         data.rigging = extras.rigging;
         data.skeletal = extras.skeletal;
+        data.ik = extras.ik;
         data.projectFormat = 'sss-full-project';
         downloadProject(data, projectFileName(data));
         void putExtras(extras);
@@ -238,6 +242,7 @@
       setTimeout(() => {
         reset();
         globalThis.__SSSSkeletal?.reset?.();
+        globalThis.__SSSIK?.reset?.();
         scheduleExtrasSave();
       }, 0);
       return;
@@ -265,9 +270,10 @@
         try {
           const data = JSON.parse(await file.text());
           const extras = {
-            version: 1,
+            version: 2,
             rigging: data.rigging || data.extensions?.rigging || null,
-            skeletal: data.skeletal || data.extensions?.skeletal || null
+            skeletal: data.skeletal || data.extensions?.skeletal || null,
+            ik: data.ik || data.extensions?.ik || null
           };
 
           const status = document.querySelector('.project-status');
