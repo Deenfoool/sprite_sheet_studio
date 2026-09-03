@@ -45,6 +45,7 @@
     pickButton.classList.toggle('primary', picking && isCustom);
     pickButton.textContent = picking ? 'Click preview…' : 'Pick anchor on preview';
     hint.textContent = isCustom ? describe(currentFrame()) : 'Choose Custom to use per-frame anchors.';
+    if (isCustom) el.anchorInfo.textContent = 'Custom';
   }
 
   function drawMarker() {
@@ -61,7 +62,7 @@
     ctx.save();
     ctx.strokeStyle = '#ffcf4a';
     ctx.fillStyle = '#ffcf4a';
-    ctx.lineWidth = Math.max(1, 1 / Math.max(1, state.zoom));
+    ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(x - 5, y);
     ctx.lineTo(x + 5, y);
@@ -81,6 +82,13 @@
     updateUi();
   };
 
+  const originalRenderStats = renderStats;
+  renderStats = function customAnchorRenderStats() {
+    originalRenderStats();
+    if (el.anchor.value === 'custom') el.anchorInfo.textContent = 'Custom';
+    updateUi();
+  };
+
   pickButton.addEventListener('click', () => {
     if (!state.frames.length) return toast('Load frames first.', true);
     picking = !picking;
@@ -95,7 +103,8 @@
       item.customAnchor = { u: source.u, v: source.v };
     });
     picking = false;
-    renderPreview();
+    renderAll();
+    globalThis.__SSSProject?.autosave?.();
     toast('Custom anchor copied to all frames');
   });
 
@@ -119,7 +128,7 @@
       v: localY / Math.max(1, frame.canvas.height)
     };
     picking = false;
-    renderPreview();
+    renderAll();
     globalThis.__SSSProject?.autosave?.();
     toast(`Anchor set for frame ${state.currentIndex + 1}`);
   });
