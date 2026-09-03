@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { test, expect } from '@playwright/test';
 
 test('boots the complete editor runtime without page errors', async ({ page }) => {
@@ -18,6 +19,25 @@ test('boots the complete editor runtime without page errors', async ({ page }) =
   await expect(page.getByRole('button', { name: /Animated PNG/i })).toBeVisible();
 
   expect(pageErrors).toEqual([]);
+});
+
+test('loads a real transparent sprite sheet and auto-slices four frames', async ({ page }) => {
+  const encoded = await readFile('tests/fixtures/transparent-4-frame-sheet.png.base64', 'utf8');
+  const buffer = Buffer.from(encoded.trim(), 'base64');
+
+  await page.goto('/');
+  await page.locator('#fileInput').setInputFiles({
+    name: 'transparent-4-frame-sheet.png',
+    mimeType: 'image/png',
+    buffer
+  });
+
+  await expect(page.locator('#sourceName')).toContainText('transparent-4-frame-sheet.png');
+  await page.locator('#autoSliceBtn').click();
+  await expect(page.locator('#colsInput')).toHaveValue('4');
+  await expect(page.locator('#rowsInput')).toHaveValue('1');
+  await expect(page.locator('#frames .frame-card')).toHaveCount(4);
+  await expect(page.locator('#frameCount')).toHaveText('4');
 });
 
 test('demo animation plays and exports through workers', async ({ page }) => {
@@ -51,7 +71,7 @@ test('demo animation plays and exports through workers', async ({ page }) => {
   expect(pageErrors).toEqual([]);
 });
 
-test('custom anchors and full SSS project save are available', async ({ page }) => {
+test('custom anchors are persisted in a full SSS project', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Try demo' }).click();
 
@@ -62,15 +82,23 @@ test('custom anchors and full SSS project save are available', async ({ page }) 
   const preview = page.locator('#previewCanvas');
   const box = await preview.boundingBox();
   expect(box).not.toBeNull();
-  if (box) {
-    await page.mouse.click(box.x + box.width / 2, box.y + box.height * 0.8);
-  }
+  if (box) await page.mouse.click(box.x + box.width / 2, box.y + box.height * 0.8);
   await expect(page.locator('#customAnchorHint')).toContainText('anchor');
 
   const projectDownload = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save .sss' }).click();
   const project = await projectDownload;
   expect(project.suggestedFilename()).toMatch(/\.sss$/i);
+
+  const projectPath = await project.path();
+  expect(projectPath).not.toBeNull();
+  if (projectPath) {
+    const saved = JSON.parse(await readFile(projectPath, 'utf8'));
+    expect(saved.projectFormat).toBe('sss-full-project');
+    expect(saved.rigging).toBeTruthy();
+    expect(saved.skeletal).toBeTruthy();
+    expect(saved.animations.idle.frames[0].customAnchor).toBeTruthy();
+  }
 });
 
 test('rigging, IK locks and skeletal scale controls are mounted', async ({ page }) => {
@@ -81,8 +109,7 @@ test('rigging, IK locks and skeletal scale controls are mounted', async ({ page 
   await expect(page.locator('#ikEnable')).toBeVisible();
   await expect(page.locator('#ikLockA')).toBeVisible();
   await expect(page.locator('#ikLockB')).toBeVisible();
-
-  await page.getByRole('button', { name: /Load parts/i }).isVisible();
+  await expect(page.getByRole('button', { name: /Load parts/i })).toBeVisible();
   await expect(page.locator('#rigPartScaleX')).toBeAttached();
   await expect(page.locator('#rigPartScaleY')).toBeAttached();
   await expect(page.locator('#skAnimSelect')).toBeVisible();
@@ -97,7 +124,8 @@ test('built-in diagnostics complete and can export a report', async ({ page }) =
   await expect(page.locator('.sss-diagnostics')).toBeVisible();
   const summary = page.locator('[data-diag-summary]');
   await expect(summary).toContainText('passed');
-  await expect(page.locator('.sss-diagnostics-row')).toHaveCount(18);
+  const diagnosticsCount = await page.locator('.sss-diagnostics-row').count();
+  expect(diagnosticsCount).toBeGreaterThanOrEqual(21);
 
   const reportDownload = page.waitForEvent('download');
   await page.getByRole('button', { name: /Export report JSON/i }).click();
