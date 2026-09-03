@@ -60,6 +60,7 @@ async function runDiagnostics() {
   result('Multi-chain IK', Boolean(globalThis.__SSSIK?.state?.chains && Array.isArray(globalThis.__SSSIK.state.chains)), globalThis.__SSSIK ? `${globalThis.__SSSIK.state.chains.length} configured chain(s)` : 'solver missing');
   result('IK pole targets', Boolean(globalThis.__SSSIKPole), globalThis.__SSSIKPole ? 'pole-target runtime ready' : 'pole-target runtime missing');
   result('IK stretch', Boolean(globalThis.__SSSIKStretch), globalThis.__SSSIKStretch ? 'stretch runtime ready' : 'stretch runtime missing');
+  result('AI Fixer similarity diagnostics', Boolean(globalThis.__SSSAIFixer), globalThis.__SSSAIFixer ? 'duplicate/broken-frame/heatmap runtime ready' : 'AI Fixer diagnostics bridge missing');
   result('Accessibility runtime', Boolean(globalThis.__SSSAccessibility), globalThis.__SSSAccessibility ? 'a11y bridge ready' : 'accessibility module missing');
   result('Skip link', Boolean(document.querySelector('.sss-skip-link')), document.querySelector('.sss-skip-link') ? 'mounted' : 'missing');
   result('Live region', Boolean(document.querySelector('#sss-live-region')), document.querySelector('#sss-live-region') ? 'mounted' : 'missing');
@@ -102,6 +103,7 @@ async function runDiagnostics() {
     checkFetch('./src/object-slicer.js', 'Object Slice module'),
     checkFetch('./src/cleanup-compare.js', 'Cleanup comparison module'),
     checkFetch('./src/onion-stack.js', 'Onion stack module'),
+    checkFetch('./src/ai-fixer.js', 'AI Fixer diagnostics module'),
     checkFetch('./src/animated-webp.js', 'Animated WebP module'),
     checkFetch('./src/unity-package.js', 'Unity package module'),
     checkFetch('./src/skeletal-easing-persistence.js', 'Skeletal easing persistence module'),
