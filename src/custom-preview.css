@@ -1,0 +1,16 @@
+.custom-preview-color {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px solid #1d2c41;
+  border-radius: 8px;
+  background: #0a1220;
+}
+
+.custom-preview-color[hidden] { display: none; }
+.custom-preview-color label { color: #8fa0b8; font-size: 10px; font-weight: 600; }
+.custom-preview-color input[type="color"] { width: 34px; height: 26px; padding: 0; border: 1px solid #2a3c54; border-radius: 6px; background: transparent; }
+.custom-preview-color span { min-width: 54px; color: #9eb0c8; font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; }
