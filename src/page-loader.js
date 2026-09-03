@@ -6,6 +6,7 @@ const extensionUrl = new URL('./editor-extensions.js', import.meta.url);
 const engineExportsUrl = new URL('./engine-exports.js', import.meta.url);
 const riggingUrl = new URL('./rigging.js', import.meta.url);
 const skeletalAnimationUrl = new URL('./skeletal-animation.js', import.meta.url);
+const ikUrl = new URL('./ik.js', import.meta.url);
 
 function showFatal(error) {
   console.error('[Sprite Sheet Studio] startup failed', error);
@@ -93,14 +94,15 @@ async function boot() {
   }
 
   const sourceUrl = new URL('./main-v2.ts', import.meta.url);
-  const [source, extension, engineExports, rigging, skeletalAnimation] = await Promise.all([
+  const [source, extension, engineExports, rigging, skeletalAnimation, ik] = await Promise.all([
     fetchText(sourceUrl, 'editor source'),
     fetchText(extensionUrl, 'project system'),
     fetchText(engineExportsUrl, 'engine exporters'),
     fetchText(riggingUrl, 'bone rigging workspace'),
-    fetchText(skeletalAnimationUrl, 'skeletal animation editor')
+    fetchText(skeletalAnimationUrl, 'skeletal animation editor'),
+    fetchText(ikUrl, 'inverse kinematics')
   ]);
-  const js = `${stripMainTypeScript(source)}\n\n${exposeProjectBridge(extension)}\n\n${engineExports}\n\n${exposeRigBridge(rigging)}\n\n${skeletalAnimation}`;
+  const js = `${stripMainTypeScript(source)}\n\n${exposeProjectBridge(extension)}\n\n${engineExports}\n\n${exposeRigBridge(rigging)}\n\n${skeletalAnimation}\n\n${ik}`;
 
   const blobUrl = URL.createObjectURL(new Blob([`${js}\n//# sourceURL=sprite-sheet-studio-runtime.js`], { type: 'text/javascript' }));
   try {
