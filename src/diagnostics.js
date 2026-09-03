@@ -40,6 +40,8 @@ async function runDiagnostics() {
   result('Skeletal library', Boolean(globalThis.__SSSSkeletal), globalThis.__SSSSkeletal ? 'bridge ready' : 'bridge missing');
   result('Rig project persistence', Boolean(globalThis.__SSSRigPersistence), globalThis.__SSSRigPersistence ? 'full .sss integration ready' : 'persistence bridge missing');
   result('IK', Boolean(globalThis.__SSSIK), globalThis.__SSSIK ? 'solver ready' : 'solver missing');
+  result('Source cell selection UI', Boolean(document.querySelector('[data-source-cell-status]')), document.querySelector('[data-source-cell-status]') ? 'mounted' : 'missing');
+  result('Cleanup comparison UI', Boolean(document.querySelector('.cleanup-compare')), document.querySelector('.cleanup-compare') ? 'mounted' : 'missing');
 
   try {
     const bytes = zipSync({ 'test.txt': new TextEncoder().encode('ok') }, { level: 0 });
@@ -69,6 +71,8 @@ async function runDiagnostics() {
     checkFetch('./src/multi-atlas.js', 'Multi-atlas module'),
     checkFetch('./src/aseprite-export.js', 'Aseprite exporter'),
     checkFetch('./src/custom-anchor.js', 'Custom anchor module'),
+    checkFetch('./src/source-cell-selection.js', 'Source cell selection module'),
+    checkFetch('./src/cleanup-compare.js', 'Cleanup comparison module'),
     checkFetch('./src/rig-project-persistence.js', 'Rig project persistence module')
   ]);
 
