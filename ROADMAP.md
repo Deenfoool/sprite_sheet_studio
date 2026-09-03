@@ -40,13 +40,17 @@ Sprite Sheet Studio — local-first браузерный редактор для
 
 ✅ Playwright projects для Chromium / Firefox / WebKit.
 
+✅ Брендовые assets разложены по `assets/brand` / `assets/icons` и реально используются сайтом.
+
+✅ Lucide Icons подключены как progressive enhancement с текстовым fallback.
+
 🟡 Генератор committed runtime bundle и workflow подготовлены, но GitHub Actions в репозитории пока не запускаются.
 
 ⬜ Переключить production Pages с runtime TypeScript stripping на подтверждённый committed bundle.
 
 ### Главный архитектурный долг
 
-Текущий Pages runtime полностью автономен от CDN, но `page-loader.js` всё ещё преобразует `main-v2.ts` в браузере. Генератор bundle уже подготовлен; переключение будет сделано только после появления надёжного способа собирать и проверять committed bundle без риска снова уронить Pages.
+Текущий Pages runtime полностью автономен от обязательных CDN-зависимостей приложения, но `page-loader.js` всё ещё преобразует `main-v2.ts` в браузере. Генератор bundle уже подготовлен; переключение будет сделано только после появления надёжного способа собирать и проверять committed bundle без риска снова уронить Pages.
 
 ---
 
@@ -258,7 +262,7 @@ Sprite Sheet Studio — local-first браузерный редактор для
 
 ---
 
-# Phase 8 — Skeletal Animation — 🟡 PARTIAL
+# Phase 8 — Skeletal Animation — ✅ DONE
 
 ✅ Multiple skeletal animations.
 
@@ -286,7 +290,13 @@ Sprite Sheet Studio — local-first браузерный редактор для
 
 ✅ Skeletal animation library export.
 
-⬜ Track-oriented timeline с отдельными bone/property lanes.
+✅ **Track-oriented timeline** с отдельными bone / sprite-part property lanes.
+
+✅ Change-aware key markers: lane показывает key только если соответствующее свойство реально изменилось.
+
+✅ Track filter: bones / parts / selected entity.
+
+✅ Timeline zoom, ruler, playhead и click-to-scrub по property markers.
 
 ---
 
@@ -340,11 +350,23 @@ Sprite Sheet Studio — local-first браузерный редактор для
 
 ✅ Restore bind pose.
 
+✅ **Delaunay retriangulation** для текущих vertices.
+
+✅ Manual triangle add / remove.
+
+✅ Vertex inspector: UV + local offsets.
+
+✅ Per-vertex bone-weight editing.
+
+✅ Normalize selected vertex / normalize all.
+
+✅ Influence pruning по minimum weight и max influences.
+
+✅ Smoke coverage topology + weight normalization.
+
 ⬜ WebGL/PixiJS renderer для больших mesh.
 
-⬜ Better triangulation / topology editing.
-
-⬜ Multi-bone weight normalization UI.
+⬜ Mesh topology/weights persistence внутри полного `.sss`.
 
 ---
 
@@ -394,6 +416,8 @@ Sprite Sheet Studio — local-first браузерный редактор для
 
 ✅ Rulers / guides.
 
+✅ **Named Guide Manager** с unlimited X/Y guides, visibility и local persistence.
+
 ✅ Fullscreen workspace.
 
 ✅ Dark responsive desktop-first UI.
@@ -404,6 +428,10 @@ Sprite Sheet Studio — local-first браузерный редактор для
 
 ✅ Before / After cleanup comparison.
 
+✅ **Command Palette (`Ctrl/Cmd + K`)** с fuzzy search и контекстными командами.
+
+✅ **Custom Shortcut Editor** с local persistence и user-defined bindings.
+
 ✅ Focus-visible treatment.
 
 ✅ Skip-to-workspace link.
@@ -413,12 +441,6 @@ Sprite Sheet Studio — local-first браузерный редактор для
 ✅ Canvas/dialog semantics.
 
 ✅ `prefers-reduced-motion` support.
-
-⬜ Named guide manager.
-
-⬜ Custom shortcut editor.
-
-⬜ Command palette.
 
 ⬜ Better touch/tablet editing.
 
@@ -500,6 +522,8 @@ Backend остаётся необязательным.
 
 ✅ Smoke-тесты загрузки, slicing, Object Slice, cell selection, cleanup comparison, exports, `.sss`, rigging, advanced IK, AI diagnostics, accessibility и self-test.
 
+✅ Дополнительные smoke suites: branding/assets, mesh topology, skeletal tracks, Command Palette, Named Guides, Custom Shortcuts.
+
 ✅ Playwright targets: Chromium / Firefox / WebKit.
 
 ✅ `BROWSER_SUPPORT.md` с capability matrix и release rule.
@@ -510,7 +534,7 @@ Backend остаётся необязательным.
 
 ✅ Release checklist.
 
-🟡 Committed production bundle generator/workflow подготовлен, но Actions в репозитории сейчас не запускаются.
+🟡 Committed production bundle generator/workflow подготовлен, но Actions в репозитории по-прежнему не запускаются (на свежем commit workflow runs = 0).
 
 ⬜ Перевести Pages на committed production bundle без runtime TS stripping.
 
@@ -534,11 +558,19 @@ Backend остаётся необязательным.
 
 ## Release 0.5 — Rigging polish
 
-1. Track-oriented skeletal timeline.
-2. Better mesh topology / weights UI.
-3. Better rig/game-engine export.
-4. IK solver priorities для shared parent chains.
+1. Mesh topology/weights persistence внутри `.sss`.
+2. Better rig/game-engine skeletal export.
+3. IK solver priorities для shared parent chains.
+4. WebGL/PixiJS mesh renderer для тяжёлых mesh.
 5. Дальнейшая polish pass skeletal/rig workflow.
+
+## Release 0.6 — Editor polish / performance
+
+1. Better touch/tablet editing.
+2. Lazy decoding больших sprite sheets.
+3. Progressive preview для очень больших источников.
+4. Общий RAM budget manager.
+5. Animated WebP worker/muxing optimization.
 
 ## Release 1.0
 
@@ -551,7 +583,8 @@ Backend остаётся необязательным.
 - local full-project `.sss` persistence;
 - GIF / APNG / WebP / PNG / atlas / multi-atlas exports;
 - Godot / Phaser / Unity package exports;
-- basic rigging + skeletal animation + advanced multi-chain IK + mesh MVP;
+- rigging + skeletal property tracks + advanced multi-chain IK + mesh editor;
+- professional keyboard UX: Command Palette + custom shortcuts;
 - stable GitHub Pages build;
 - documented and actually verified browser support;
 - no mandatory backend.
