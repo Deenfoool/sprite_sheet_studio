@@ -182,7 +182,7 @@ Sprite Sheet Studio — local-first браузерный редактор для
 
 ✅ Skeletal easing / cubic-bezier settings в полном `.sss`.
 
-✅ Multi-chain IK targets / constraints в полном `.sss`.
+✅ Multi-chain IK targets / constraints / pole targets / stretch settings в полном `.sss`.
 
 ---
 
@@ -290,13 +290,13 @@ Sprite Sheet Studio — local-first браузерный редактор для
 
 ---
 
-# Phase 9 — Inverse Kinematics — 🟡 PARTIAL
+# Phase 9 — Inverse Kinematics — ✅ MVP DONE
 
 ✅ Two-bone IK.
 
 ✅ Arm / leg chains.
 
-✅ Draggable target.
+✅ Draggable targets.
 
 ✅ Bend direction.
 
@@ -308,13 +308,19 @@ Sprite Sheet Studio — local-first браузерный редактор для
 
 ✅ Каждая IK chain может быть отдельно включена/выключена.
 
-✅ Multi-chain IK сохраняется в `.sss` и local extras autosave.
+✅ **Dedicated pole target** для каждой цепи.
+
+✅ Pole target можно тянуть на canvas; bend direction определяется относительно pole.
+
+✅ **Stretch mode** для недостижимых targets.
+
+✅ Rest lengths и настраиваемый maximum stretch.
+
+✅ Advanced IK сохраняется в `.sss` и local extras autosave.
 
 ✅ IK pose можно сохранить keyframe.
 
-⬜ Dedicated pole-target object.
-
-⬜ Stretch mode / advanced unreachable-target behavior.
+🟡 На будущее можно добавить приоритеты/solver ordering для цепей, которые изменяют общие родительские bones.
 
 ---
 
@@ -342,7 +348,7 @@ Sprite Sheet Studio — local-first браузерный редактор для
 
 ---
 
-# Phase 11 — AI Sprite Sheet Fixer — ✅ MVP DONE
+# Phase 11 — AI Sprite Sheet Fixer — ✅ LOCAL MVP DONE
 
 Базовый fixer работает локально без AI API.
 
@@ -362,11 +368,15 @@ Sprite Sheet Studio — local-first браузерный редактор для
 
 ✅ Object Slice может использоваться как локальный segmentation fallback.
 
+✅ **Duplicate frame detection** через комбинированный visual/silhouette similarity score.
+
+✅ **Broken-frame suspects**: empty, severe size outlier, isolated jump и extreme occupancy change.
+
+✅ **Similarity heatmap** для всей animation sequence.
+
+✅ Heatmap показывает pair similarity и позволяет выбрать кадр кликом.
+
 ⬜ Optional generative repair / inpainting через AI API.
-
-⬜ Similarity heatmap.
-
-⬜ Broken / duplicate frame detection.
 
 ---
 
@@ -488,7 +498,7 @@ Backend остаётся необязательным.
 
 ✅ Test sprite fixtures.
 
-✅ Smoke-тесты загрузки, slicing, Object Slice, cell selection, cleanup comparison, exports, `.sss`, rigging, multi-chain IK, accessibility и diagnostics.
+✅ Smoke-тесты загрузки, slicing, Object Slice, cell selection, cleanup comparison, exports, `.sss`, rigging, advanced IK, AI diagnostics, accessibility и self-test.
 
 ✅ Playwright targets: Chromium / Firefox / WebKit.
 
@@ -525,10 +535,10 @@ Backend остаётся необязательным.
 ## Release 0.5 — Rigging polish
 
 1. Track-oriented skeletal timeline.
-2. Dedicated IK pole targets.
-3. IK stretch / unreachable-target modes.
-4. Better mesh topology / weights UI.
-5. Better rig/game-engine export.
+2. Better mesh topology / weights UI.
+3. Better rig/game-engine export.
+4. IK solver priorities для shared parent chains.
+5. Дальнейшая polish pass skeletal/rig workflow.
 
 ## Release 1.0
 
@@ -536,11 +546,12 @@ Backend остаётся необязательным.
 
 - sprite sheet / frame / Object Slice workflow;
 - cleanup / Auto Align / custom anchors;
+- local AI-style diagnostics / duplicate and broken-frame detection;
 - animation editor;
 - local full-project `.sss` persistence;
 - GIF / APNG / WebP / PNG / atlas / multi-atlas exports;
 - Godot / Phaser / Unity package exports;
-- basic rigging + skeletal animation + multi-chain IK + mesh MVP;
+- basic rigging + skeletal animation + advanced multi-chain IK + mesh MVP;
 - stable GitHub Pages build;
 - documented and actually verified browser support;
 - no mandatory backend.
