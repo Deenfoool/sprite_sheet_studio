@@ -1,0 +1,96 @@
+.mesh-topology-panel {
+  border-top: 1px solid #203249;
+}
+.mesh-topology-stats {
+  margin: 8px 0 10px;
+  padding: 8px;
+  border: 1px solid #24384f;
+  border-radius: 7px;
+  background: #09131f;
+  color: #7f93ad;
+  font-size: 9px;
+  line-height: 1.4;
+}
+.mesh-topology-index-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 6px;
+}
+.mesh-vertex-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin: 8px 0 10px;
+}
+.mesh-vertex-fields label,
+.mesh-weight-cleanup label {
+  display: grid;
+  gap: 4px;
+  color: #8396ae;
+  font-size: 9px;
+}
+.mesh-vertex-fields input,
+.mesh-topology-index-row input,
+.mesh-weight-editor input,
+.mesh-weight-editor select,
+.mesh-triangle-editor input,
+.mesh-triangle-list,
+.mesh-weight-cleanup input,
+.mesh-weight-cleanup select {
+  min-width: 0;
+  height: 30px;
+  border: 1px solid #243850;
+  border-radius: 7px;
+  background: #09131f;
+  color: #dce7f5;
+  padding: 0 7px;
+  outline: none;
+}
+.mesh-vertex-fields input:focus,
+.mesh-topology-index-row input:focus,
+.mesh-weight-editor input:focus,
+.mesh-weight-editor select:focus,
+.mesh-triangle-editor input:focus,
+.mesh-triangle-list:focus,
+.mesh-weight-cleanup input:focus,
+.mesh-weight-cleanup select:focus {
+  border-color: #248cd5;
+  box-shadow: 0 0 0 2px rgba(36,140,213,.12);
+}
+.mesh-weight-editor {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 78px;
+  gap: 6px;
+}
+.mesh-actions.compact {
+  margin-top: 6px;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+}
+.mesh-weight-readout {
+  margin-top: 6px;
+  padding: 6px 7px;
+  border-radius: 6px;
+  background: #0a1522;
+  color: #71859e;
+  font-size: 8px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.mesh-triangle-editor {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 6px;
+  margin-top: 6px;
+}
+.mesh-triangle-list {
+  width: 100%;
+  margin-top: 6px;
+}
+.mesh-weight-cleanup {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+@media (max-width: 900px) {
+  .mesh-actions.compact { grid-template-columns: 1fr; }
+}
