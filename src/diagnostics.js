@@ -56,14 +56,21 @@ async function runDiagnostics() {
   result('Rigging', Boolean(globalThis.__SSSRig), globalThis.__SSSRig ? 'bridge ready' : 'bridge missing');
   result('Skeletal library', Boolean(globalThis.__SSSSkeletal), globalThis.__SSSSkeletal ? 'bridge ready' : 'bridge missing');
   result('Skeletal easing persistence', Boolean(globalThis.__SSSSkeletalEasing), globalThis.__SSSSkeletalEasing ? 'easing extension ready' : 'extension missing');
+  result('Skeletal property tracks', Boolean(globalThis.__SSSSkeletalTracks), globalThis.__SSSSkeletalTracks ? 'track-oriented timeline ready' : 'tracks runtime missing');
   result('Rig project persistence', Boolean(globalThis.__SSSRigPersistence), globalThis.__SSSRigPersistence ? 'full .sss integration ready' : 'persistence bridge missing');
+  result('Mesh topology editor', Boolean(globalThis.__SSSMeshTopology), globalThis.__SSSMeshTopology ? 'topology/weights tools ready' : 'mesh topology bridge missing');
+  result('Mesh project persistence', Boolean(globalThis.__SSSRigPersistence?.serializeMesh && globalThis.__SSSRigPersistence?.restoreMesh), globalThis.__SSSRigPersistence?.serializeMesh ? 'mesh .sss round-trip ready' : 'mesh serializer missing');
   result('Multi-chain IK', Boolean(globalThis.__SSSIK?.state?.chains && Array.isArray(globalThis.__SSSIK.state.chains)), globalThis.__SSSIK ? `${globalThis.__SSSIK.state.chains.length} configured chain(s)` : 'solver missing');
   result('IK pole targets', Boolean(globalThis.__SSSIKPole), globalThis.__SSSIKPole ? 'pole-target runtime ready' : 'pole-target runtime missing');
   result('IK stretch', Boolean(globalThis.__SSSIKStretch), globalThis.__SSSIKStretch ? 'stretch runtime ready' : 'stretch runtime missing');
   result('AI Fixer similarity diagnostics', Boolean(globalThis.__SSSAIFixer), globalThis.__SSSAIFixer ? 'duplicate/broken-frame/heatmap runtime ready' : 'AI Fixer diagnostics bridge missing');
+  result('Command Palette', Boolean(globalThis.__SSSCommandPalette), globalThis.__SSSCommandPalette ? 'Ctrl/Cmd+K runtime ready' : 'command palette missing');
+  result('Named Guides', Boolean(globalThis.__SSSNamedGuides), globalThis.__SSSNamedGuides ? `${globalThis.__SSSNamedGuides.get?.().length || 0} saved guide(s)` : 'named-guide manager missing');
+  result('Custom Shortcuts', Boolean(globalThis.__SSSCustomShortcuts), globalThis.__SSSCustomShortcuts ? `${globalThis.__SSSCustomShortcuts.get?.().length || 0} custom binding(s)` : 'shortcut editor missing');
   result('Accessibility runtime', Boolean(globalThis.__SSSAccessibility), globalThis.__SSSAccessibility ? 'a11y bridge ready' : 'accessibility module missing');
   result('Skip link', Boolean(document.querySelector('.sss-skip-link')), document.querySelector('.sss-skip-link') ? 'mounted' : 'missing');
   result('Live region', Boolean(document.querySelector('#sss-live-region')), document.querySelector('#sss-live-region') ? 'mounted' : 'missing');
+  result('Brand assets in use', Boolean(document.querySelector('.brand-logo[src*="assets/brand/"]')), document.querySelector('.brand-logo[src*="assets/brand/"]') ? 'brand mark path normalized' : 'brand mark not mounted');
   result('Source cell selection UI', Boolean(document.querySelector('[data-source-cell-status]')), document.querySelector('[data-source-cell-status]') ? 'mounted' : 'missing');
   result('Object Slice UI', Boolean(document.querySelector('#objectSliceBtn')), document.querySelector('#objectSliceBtn') ? 'mounted' : 'missing');
   result('Cleanup comparison UI', Boolean(document.querySelector('.cleanup-compare')), document.querySelector('.cleanup-compare') ? 'mounted' : 'missing');
@@ -96,6 +103,14 @@ async function runDiagnostics() {
     checkFetch('./src/vendor/gifenc.esm.js', 'Local GIF module'),
     checkFetch('./src/zip-store.js', 'Local ZIP module'),
     checkFetch('./src/page-loader.js', 'Pages loader'),
+    checkFetch('./src/brand.js', 'Brand runtime'),
+    checkFetch('./assets/brand/logo-mark.svg', 'Brand mark asset'),
+    checkFetch('./assets/brand/logo-full.png', 'Brand full logo asset'),
+    checkFetch('./assets/icons/site.webmanifest', 'App icon manifest'),
+    checkFetch('./src/icons.js', 'Lucide integration module'),
+    checkFetch('./src/command-palette.js', 'Command Palette module'),
+    checkFetch('./src/custom-shortcuts.js', 'Custom Shortcuts module'),
+    checkFetch('./src/named-guides.js', 'Named Guides module'),
     checkFetch('./src/multi-atlas.js', 'Multi-atlas module'),
     checkFetch('./src/aseprite-export.js', 'Aseprite exporter'),
     checkFetch('./src/custom-anchor.js', 'Custom anchor module'),
@@ -107,6 +122,8 @@ async function runDiagnostics() {
     checkFetch('./src/animated-webp.js', 'Animated WebP module'),
     checkFetch('./src/unity-package.js', 'Unity package module'),
     checkFetch('./src/skeletal-easing-persistence.js', 'Skeletal easing persistence module'),
+    checkFetch('./src/skeletal-tracks.js', 'Skeletal tracks module'),
+    checkFetch('./src/mesh-topology.js', 'Mesh topology module'),
     checkFetch('./src/ik-pole.js', 'IK pole-target module'),
     checkFetch('./src/ik-stretch.js', 'IK stretch module'),
     checkFetch('./src/accessibility.js', 'Accessibility module'),
