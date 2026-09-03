@@ -1,0 +1,36 @@
+.ik-pole-panel {
+  margin-top: 7px;
+  padding: 7px;
+  border: 1px solid #243a53;
+  border-radius: 7px;
+  background: #09131f;
+}
+
+.ik-pole-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.ik-pole-row input {
+  min-width: 0;
+}
+
+.ik-pole-actions {
+  display: flex;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.ik-pole-actions .btn {
+  flex: 1;
+}
+
+.ik-pole-hint {
+  display: block;
+  margin-top: 6px;
+  color: #627995;
+  font-size: 8px;
+  line-height: 1.4;
+}
