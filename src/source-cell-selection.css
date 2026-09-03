@@ -1,0 +1,36 @@
+.source-cell-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 5px;
+  flex-wrap: wrap;
+}
+
+.source-cell-status {
+  color: #8ea2bd;
+  font-size: 11px;
+}
+
+.source-cell-controls.has-exclusions .source-cell-status {
+  color: #ff9bad;
+}
+
+.source-cell-action {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #64c6ff;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.source-cell-action:hover {
+  color: #b7e7ff;
+  text-decoration: underline;
+}
+
+#sourceCanvas {
+  touch-action: none;
+}
