@@ -25,12 +25,16 @@ test('boots the complete editor runtime without page errors', async ({ page }) =
   await expect(page.locator('#uploadZone')).toBeVisible();
   await expect(page.locator('#anchorSelect option[value="custom"]')).toHaveCount(1);
   await expect(page.locator('#bgSelect option[value="custom"]')).toHaveCount(1);
+  await expect(page.locator('[data-source-cell-status]')).toBeAttached();
+  await expect(page.getByRole('button', { name: /Trim current/i })).toBeAttached();
 
   await expect(page.getByRole('button', { name: /Rigging/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /Diagnostics/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /Multi-atlas/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /Aseprite/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /Animated PNG/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Animated WebP/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Unity package/i })).toBeVisible();
 
   expect(pageErrors).toEqual([]);
 });
@@ -61,7 +65,23 @@ test('source sheet cells can be excluded and restored by clicking the grid', asy
   await expect(page.locator('[data-source-cell-status]')).toContainText('All 4');
 });
 
-test('demo animation plays and exports through workers', async ({ page }) => {
+test('cleanup compare and multi-frame onion controls are mounted', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Try demo' }).click();
+
+  await page.locator('#onionInput').check();
+  await expect(page.locator('[data-onion-depth]')).toBeVisible();
+  await page.locator('[data-onion-depth]').selectOption('3');
+  await expect(page.locator('.onion-stack-overlay')).toBeAttached();
+
+  await page.locator('#trimBtn').click();
+  await expect(page.locator('.cleanup-compare')).toBeVisible();
+  await expect(page.locator('[data-compare-label]')).toContainText('Trim transparent');
+  await page.getByRole('button', { name: /Close comparison/i }).click();
+  await expect(page.locator('.cleanup-compare')).toHaveClass(/hidden/);
+});
+
+test('demo animation plays and exports through workers and WebP muxer', async ({ page }) => {
   const pageErrors: string[] = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
 
@@ -88,6 +108,20 @@ test('demo animation plays and exports through workers', async ({ page }) => {
   await apngButton.click();
   const apng = await apngDownload;
   expect(apng.suggestedFilename()).toMatch(/\.png$/i);
+
+  const webpDownloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: /Animated WebP/i }).click();
+  const webp = await webpDownloadPromise;
+  expect(webp.suggestedFilename()).toMatch(/\.webp$/i);
+  const webpPath = await webp.path();
+  expect(webpPath).not.toBeNull();
+  if (webpPath) {
+    const bytes = await readFile(webpPath);
+    expect(bytes.subarray(0, 4).toString('ascii')).toBe('RIFF');
+    expect(bytes.subarray(8, 12).toString('ascii')).toBe('WEBP');
+    expect(bytes.includes(Buffer.from('ANIM'))).toBe(true);
+    expect(bytes.includes(Buffer.from('ANMF'))).toBe(true);
+  }
 
   expect(pageErrors).toEqual([]);
 });
@@ -146,7 +180,7 @@ test('built-in diagnostics complete and can export a report', async ({ page }) =
   const summary = page.locator('[data-diag-summary]');
   await expect(summary).toContainText('passed');
   const diagnosticsCount = await page.locator('.sss-diagnostics-row').count();
-  expect(diagnosticsCount).toBeGreaterThanOrEqual(21);
+  expect(diagnosticsCount).toBeGreaterThanOrEqual(23);
 
   const reportDownload = page.waitForEvent('download');
   await page.getByRole('button', { name: /Export report JSON/i }).click();
