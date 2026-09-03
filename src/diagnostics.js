@@ -42,6 +42,9 @@ async function runDiagnostics() {
   result('IK', Boolean(globalThis.__SSSIK), globalThis.__SSSIK ? 'solver ready' : 'solver missing');
   result('Source cell selection UI', Boolean(document.querySelector('[data-source-cell-status]')), document.querySelector('[data-source-cell-status]') ? 'mounted' : 'missing');
   result('Cleanup comparison UI', Boolean(document.querySelector('.cleanup-compare')), document.querySelector('.cleanup-compare') ? 'mounted' : 'missing');
+  result('Onion stack UI', Boolean(document.querySelector('[data-onion-depth]')), document.querySelector('[data-onion-depth]') ? 'mounted' : 'missing');
+  result('Animated WebP export', Array.from(document.querySelectorAll('.export-grid button')).some((button) => button.textContent?.includes('Animated WebP')), 'export button');
+  result('Unity package export', Array.from(document.querySelectorAll('.export-grid button')).some((button) => button.textContent?.includes('Unity package')), 'export button');
 
   try {
     const bytes = zipSync({ 'test.txt': new TextEncoder().encode('ok') }, { level: 0 });
@@ -73,6 +76,9 @@ async function runDiagnostics() {
     checkFetch('./src/custom-anchor.js', 'Custom anchor module'),
     checkFetch('./src/source-cell-selection.js', 'Source cell selection module'),
     checkFetch('./src/cleanup-compare.js', 'Cleanup comparison module'),
+    checkFetch('./src/onion-stack.js', 'Onion stack module'),
+    checkFetch('./src/animated-webp.js', 'Animated WebP module'),
+    checkFetch('./src/unity-package.js', 'Unity package module'),
     checkFetch('./src/rig-project-persistence.js', 'Rig project persistence module')
   ]);
 
