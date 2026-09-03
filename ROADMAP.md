@@ -1,658 +1,557 @@
 # Sprite Sheet Studio — Roadmap
 
-Sprite Sheet Studio — браузерный инструмент для подготовки 2D-спрайтов и sprite sheet-анимаций для игр.
+Sprite Sheet Studio — local-first браузерный редактор для подготовки 2D-спрайтов, frame-анимации, skeletal animation и игровых экспортов.
 
-Ключевая идея проекта:
+> **Upload → Slice → Fix → Animate → Rig → Export**
 
-> **Upload → Slice → Align → Animate → Rig → Export**
+Основной принцип проекта не меняется: базовый редактор должен работать без аккаунта и backend, а пользовательские изображения не должны покидать браузер.
 
-Первая версия должна работать полностью на клиенте, без обязательного backend: изображения пользователя не покидают браузер, а проект можно размещать на GitHub Pages.
+## Статусы
 
----
-
-## Цели проекта
-
-- Быстро превращать sprite sheet в готовую анимацию.
-- Поддерживать загрузку отдельных кадров.
-- Исправлять типичные проблемы AI-сгенерированных спрайтов: разные отступы, дрожание, смещение персонажа между кадрами.
-- Давать pixel-perfect preview без размытия.
-- Экспортировать результат не только в GIF, но и в форматы, удобные для игровых движков.
-- В дальнейшем добавить 2D skeletal animation: кости, keyframes, IK и переиспользуемые анимации.
-- По возможности сохранять основной workflow полностью client-side.
+- ✅ **DONE** — основная рабочая версия функции уже есть.
+- 🟡 **PARTIAL** — рабочая база есть, но нужны улучшения.
+- ⬜ **TODO** — ещё не реализовано.
 
 ---
 
-# Phase 0 — Foundation
+# Phase 0 — Foundation — 🟡 PARTIAL
 
-## Задача
+✅ Vite + TypeScript.
 
-Создать техническую основу статического редактора.
+✅ Vanilla TypeScript / Canvas 2D editor.
 
-## План
+✅ GitHub Pages через `main / (root)`.
 
-- [ ] Создать приложение на Vite + TypeScript.
-- [ ] Выбрать UI-подход: vanilla TS или React.
-- [ ] Настроить GitHub Pages deployment.
-- [ ] Настроить ESLint / Prettier.
-- [ ] Добавить базовую структуру проекта.
-- [ ] Добавить Canvas-based workspace.
-- [ ] Добавить drag & drop загрузку файлов.
-- [ ] Не отправлять пользовательские изображения на сервер.
+✅ Client-side image processing.
 
-## Базовая архитектура
+✅ Drag & drop / clipboard import.
 
-```text
-src/
-  app/
-  canvas/
-  frames/
-  animation/
-  rigging/
-  export/
-  storage/
-  ui/
-  utils/
-```
+✅ IndexedDB storage.
 
-## Предлагаемый стек
+✅ Web Worker для тяжёлого GIF encoding.
 
-- Vite
-- TypeScript
-- Canvas 2D для MVP
-- Web Workers для тяжёлых операций экспорта
-- IndexedDB для сохранения проектов
-- GitHub Pages для хостинга
+⬜ ESLint / Prettier и более строгий CI.
 
-Позже, если понадобится mesh deformation и более сложный рендеринг:
+⬜ Разделение большого runtime на нормальный production bundle без runtime TS stripping.
 
-- PixiJS или собственный WebGL renderer
+### Следующий архитектурный долг
+
+Текущий Pages runtime специально работает без GitHub Actions и внешних CDN, но для долгосрочного развития нужно убрать runtime-трансформацию `main-v2.ts` и перейти на committed production bundle либо отдельную publish-ветку.
 
 ---
 
-# Phase 1 — MVP: Sprite Sheet → Animation
+# Phase 1 — MVP: Sprite Sheet → Animation — ✅ DONE
 
-## Импорт
+## Import
 
-- [ ] Загрузка PNG.
-- [ ] Загрузка WebP.
-- [ ] Drag & drop.
-- [ ] Вставка изображения из clipboard.
-- [ ] Загрузка нескольких отдельных PNG-кадров.
+✅ PNG / WebP.
 
-## Нарезка sprite sheet
+✅ Drag & drop.
 
-- [ ] Ручное количество строк.
-- [ ] Ручное количество колонок.
-- [ ] Настройка ширины/высоты кадра.
-- [ ] Настройка padding.
-- [ ] Настройка spacing.
-- [ ] Визуальная сетка поверх sprite sheet.
-- [ ] Выбор нужных кадров мышью.
+✅ Clipboard paste.
+
+✅ Несколько отдельных кадров.
+
+✅ Natural filename sorting.
+
+## Slice
+
+✅ Rows / columns.
+
+✅ Padding / spacing.
+
+✅ Visual grid.
+
+✅ Ручная корректировка сетки.
 
 ## Timeline
 
-- [ ] Отображение кадров на timeline.
-- [ ] Drag & drop изменения порядка кадров.
-- [ ] Удаление кадров.
-- [ ] Дублирование кадров.
-- [ ] Вставка кадров.
-- [ ] Reverse frames.
+✅ Frame thumbnails.
+
+✅ Drag reorder.
+
+✅ Delete / duplicate / reverse.
+
+✅ Multi-select.
+
+✅ Context menu.
 
 ## Preview
 
-- [ ] Play / Pause.
-- [ ] FPS.
-- [ ] Loop.
-- [ ] Ping-pong.
-- [ ] Скорость воспроизведения.
-- [ ] Pixel-perfect масштабирование.
-- [ ] Zoom x1 / x2 / x3 / x4 / x8.
-- [ ] Checkerboard background.
-- [ ] Белый фон.
-- [ ] Чёрный фон.
-- [ ] Пользовательский фон preview.
+✅ Play / Pause.
 
-## Экспорт MVP
+✅ FPS.
 
-- [ ] GIF.
-- [ ] PNG sequence.
-- [ ] Новый sprite sheet PNG.
+✅ Loop / Ping-pong / Once.
 
----
+✅ Pixel-perfect scaling.
 
-# Phase 2 — Smart Slicing
+✅ Zoom.
 
-## Auto Slice
+✅ Checker / white / black background.
 
-Автоматически находить кадры в sprite sheet.
+## MVP Export
 
-- [ ] Анализ прозрачных областей.
-- [ ] Поиск bounding boxes.
-- [ ] Определение повторяющегося размера кадров.
-- [ ] Автоматическое определение строк и колонок.
-- [ ] Предложение найденной сетки пользователю.
-- [ ] Возможность вручную исправить результат.
+✅ Animated GIF.
 
-Пример:
+✅ PNG sequence ZIP.
 
-```text
-Загружено изображение
-
-Найдено: 4 кадра
-Размер: 32 × 48 px
-Предполагаемая сетка: 4 × 1
-```
-
-## Работа с отдельными файлами
-
-- [ ] Автоматическая сортировка `idle_01.png`, `idle_02.png`, ...
-- [ ] Natural filename sorting.
-- [ ] Общая нормализация размера кадров.
+✅ Sprite sheet PNG.
 
 ---
 
-# Phase 3 — Sprite Cleanup
+# Phase 2 — Smart Slicing — 🟡 PARTIAL
 
-Это одна из ключевых функций Sprite Sheet Studio.
+✅ Анализ прозрачных разделителей.
 
-## Trim
+✅ Auto Slice для регулярных transparent sheets.
 
-- [ ] Автоматически обрезать прозрачные края.
-- [ ] Trim одного кадра.
-- [ ] Trim всей анимации.
-- [ ] Общий canvas после trim.
+✅ Автоматическое определение rows / columns.
 
-## Normalize
+✅ Confidence результата.
 
-- [ ] Привести все кадры к одинаковому размеру.
-- [ ] Центрировать по bounding box.
-- [ ] Не менять исходные пиксели спрайта.
+✅ Manual fallback.
 
-## Anchor Point
+✅ Natural sorting отдельных файлов.
 
-- [ ] Anchor по центру.
-- [ ] Anchor по ногам.
-- [ ] Anchor по нижнему центру.
-- [ ] Пользовательский anchor.
-- [ ] Единый anchor для всех кадров.
+✅ Общая нормализация кадров.
 
-## Auto Align
+🟡 Bounding-box анализ используется в cleanup/diagnostics, но detection ещё можно сделать умнее.
 
-Автоматически устранять "прыгание" персонажа между кадрами.
+⬜ Продвинутый object/component detection для sheet без прозрачных gutters.
 
-- [ ] Align по нижнему краю opaque pixels.
-- [ ] Align по центру opaque pixels.
-- [ ] Align по центру массы.
-- [ ] Align относительно выбранного anchor.
-- [ ] Preview до/после.
-
-Особенно важно для AI-generated sprite sheets, где персонаж часто немного смещается между кадрами.
+⬜ Детект irregular sheets с разным размером ячеек.
 
 ---
 
-# Phase 4 — Animation Editor
+# Phase 3 — Sprite Cleanup — 🟡 PARTIAL
 
-## Frame timing
+## Trim / Normalize
 
-- [ ] Индивидуальная длительность каждого кадра.
-- [ ] Массовое изменение duration.
-- [ ] Hold frame.
-- [ ] Duplicate duration.
+✅ Trim transparent edges для всей анимации.
 
-## Onion Skin
+✅ Shared normalized canvas.
 
-- [ ] Previous frame.
-- [ ] Next frame.
-- [ ] Несколько соседних кадров.
-- [ ] Настройка opacity.
+✅ Сохранение исходных opaque pixels без resampling.
 
-## Transform tools
+✅ Opaque bounds diagnostics.
 
-- [ ] Flip X.
-- [ ] Flip Y.
-- [ ] Rotate 90°.
-- [ ] Pixel-perfect move.
-- [ ] Crop.
-- [ ] Resize canvas.
-- [ ] Nearest-neighbour scaling.
+## Anchor / Auto Align
 
-## Animation presets
+✅ Feet / bottom-center.
 
-- [ ] Loop.
-- [ ] Ping-pong.
-- [ ] Once.
-- [ ] Reverse.
+✅ Bounding center.
+
+✅ Alpha-weighted center of mass.
+
+✅ Auto Align всей анимации.
+
+⬜ Пользовательский anchor, который можно поставить мышью.
+
+⬜ Before / after split preview.
+
+⬜ Dedicated `Trim current frame` command.
 
 ---
 
-# Phase 5 — Project System
+# Phase 4 — Animation Editor — ✅ DONE
 
-## Локальные проекты
+✅ Per-frame hold / duration multiplier.
 
-- [ ] Создание проекта.
-- [ ] Несколько animations внутри проекта.
-- [ ] `idle`.
-- [ ] `walk`.
-- [ ] `run`.
-- [ ] `attack`.
-- [ ] `death`.
-- [ ] Пользовательские animation names.
+✅ Массовый hold.
 
-## Хранение
+✅ Previous / next onion skin.
 
-- [ ] IndexedDB.
-- [ ] Autosave.
-- [ ] Export project file.
-- [ ] Import project file.
+✅ Onion opacity.
 
-Пример project schema:
+✅ Flip X / Flip Y.
 
-```json
-{
-  "version": 1,
-  "name": "hooded-man",
-  "animations": {
-    "idle": {},
-    "walk": {},
-    "attack": {}
-  }
-}
-```
+✅ Rotate 90°.
+
+✅ Pixel move.
+
+✅ Crop.
+
+✅ Resize canvas.
+
+✅ Nearest-neighbour scaling.
+
+✅ Loop / Ping-pong / Once / Reverse.
+
+✅ Keyboard navigation.
+
+🟡 Onion skin пока ограничен ближайшими соседями; multi-frame onion stack можно улучшить позже.
 
 ---
 
-# Phase 6 — Extended Export
+# Phase 5 — Project System — ✅ DONE
 
-## Форматы
+✅ Несколько animation clips в одном проекте.
 
-- [ ] Animated WebP.
-- [ ] APNG.
-- [ ] Sprite atlas PNG.
-- [ ] JSON metadata.
-- [ ] ZIP с PNG sequence.
+✅ `idle / walk / run / attack / death` и любые custom names.
 
-## Game engine export
+✅ IndexedDB.
+
+✅ Autosave.
+
+✅ Automatic restore.
+
+✅ Undo / Redo.
+
+✅ `.sss` project export.
+
+✅ `.sss` project import.
+
+✅ Project naming.
+
+✅ Ctrl/Cmd shortcuts.
+
+---
+
+# Phase 6 — Extended Export — 🟡 PARTIAL
+
+## Formats
+
+✅ GIF.
+
+✅ APNG.
+
+✅ Sprite sheet PNG.
+
+✅ PNG sequence ZIP.
+
+✅ Atlas PNG + JSON.
+
+✅ Generic animation metadata JSON.
+
+✅ Aseprite-compatible atlas JSON + `frameTags`.
+
+⬜ Animated WebP.
+
+## Engines
 
 ### Godot
 
-- [ ] SpriteFrames-compatible data.
-- [ ] Animation metadata.
-- [ ] Экспорт кадров по папкам.
-- [ ] Генерация `.tres` при технической возможности.
+✅ PNG frames grouped by animation.
 
-Пример:
+✅ `SpriteFrames` compatible `.tres`.
 
-```text
-hooded-man/
-  idle/
-    idle_01.png
-    idle_02.png
-    idle_03.png
-    idle_04.png
-  walk/
-  animation.json
-```
-
-### Unity
-
-- [ ] Sprite slicing metadata.
-- [ ] Animation frame metadata.
+✅ FPS / loop / frame hold metadata.
 
 ### Phaser
 
-- [ ] Atlas JSON.
-- [ ] Frame names.
+✅ Atlas PNG + JSON.
+
+✅ Animation names / frame names.
+
+✅ FPS / repeat / ping-pong metadata.
+
+### Unity
+
+✅ Slicing / animation metadata helper JSON.
+
+🟡 Unity package/importer editor script ещё не генерируется автоматически.
 
 ### Generic
 
-- [ ] Aseprite-compatible JSON, где формат это позволяет.
+✅ Engine-agnostic JSON.
+
+✅ Aseprite-compatible JSON.
 
 ---
 
-# Phase 7 — Bone Rigging MVP
+# Phase 7 — Bone Rigging MVP — ✅ DONE
 
-На этом этапе Sprite Sheet Studio становится не только frame animator, но и простым 2D rigging tool.
+✅ Root bone.
 
-## Требование к ассету
+✅ Add / delete bones.
 
-Основной сценарий — персонаж разбит на отдельные части:
+✅ Parent / child hierarchy.
 
-```text
-head
-body
-upper_arm_left
-forearm_left
-hand_left
-upper_arm_right
-forearm_right
-hand_right
-thigh_left
-shin_left
-foot_left
-thigh_right
-shin_right
-foot_right
-```
+✅ Bone offset / pivot.
 
-## Skeleton
+✅ Rotation.
 
-- [ ] Создание root bone.
-- [ ] Добавление костей.
-- [ ] Parent / child hierarchy.
-- [ ] Перемещение pivot.
-- [ ] Rotation.
-- [ ] Bone length.
-- [ ] Bone visibility.
+✅ Bone length.
 
-Пример:
+✅ Visibility.
 
-```text
-Root
-└── Pelvis
-    ├── Spine
-    │   ├── Head
-    │   ├── LeftArm
-    │   │   └── LeftForearm
-    │   │       └── LeftHand
-    │   └── RightArm
-    ├── LeftThigh
-    │   └── LeftShin
-    │       └── LeftFoot
-    └── RightThigh
-        └── RightShin
-            └── RightFoot
-```
+✅ Mouse reposition / endpoint manipulation.
 
-## Sprite attachment
+✅ Import transparent character parts.
 
-- [ ] Привязка sprite part к bone.
-- [ ] Pivot каждого sprite part.
-- [ ] Z-order частей тела.
-- [ ] Opacity.
-- [ ] Visibility.
+✅ Bind sprite part to bone.
+
+✅ Part pivot / offset / rotation.
+
+✅ Z-order.
+
+✅ Opacity / visibility.
+
+✅ Rig JSON export.
 
 ---
 
-# Phase 8 — Skeletal Animation
+# Phase 8 — Skeletal Animation — 🟡 PARTIAL
 
-## Keyframes
+✅ Multiple skeletal animations.
 
-- [ ] Bone rotation keyframes.
-- [ ] Position keyframes.
-- [ ] Scale keyframes.
-- [ ] Sprite visibility keyframes.
-- [ ] Timeline для skeletal animation.
+✅ Bone position / rotation keyframes.
 
-## Interpolation
+✅ Bone length keyframes.
 
-- [ ] Step.
-- [ ] Linear.
-- [ ] Ease in/out.
+✅ Sprite position / rotation / opacity / visibility keyframes.
 
-## Animation library
+✅ Timeline scrub / playback.
 
-Один rig должен позволять создавать несколько animations:
+✅ FPS / clip length / loop.
 
-```text
-idle
-walk
-run
-jump
-attack
-hurt
-death
-```
+✅ Step interpolation.
 
-- [ ] Duplicate animation.
-- [ ] Mirror animation.
-- [ ] Copy/paste keyframes.
-- [ ] Animation looping.
+✅ Linear interpolation.
+
+✅ Ease in/out interpolation.
+
+✅ Copy / paste pose.
+
+✅ Duplicate animation.
+
+✅ Mirror animation.
+
+✅ Skeletal animation library export.
+
+⬜ Полноценные independent X/Y scale keyframes для каждой bone/part.
+
+⬜ Curve editor / Bezier easing.
 
 ---
 
-# Phase 9 — Inverse Kinematics
+# Phase 9 — Inverse Kinematics — 🟡 PARTIAL
 
-## IK
+✅ Two-bone IK.
 
-- [ ] Two-bone IK.
-- [ ] Рука: shoulder → elbow → hand.
-- [ ] Нога: thigh → knee → foot.
-- [ ] IK target.
-- [ ] Pole target / bend direction.
+✅ Arm and leg chains.
 
-Пользователь должен иметь возможность тянуть кисть мышкой, а плечо и локоть автоматически перестраиваются.
+✅ Draggable IK target.
 
-## Constraints
+✅ Bend / pole direction.
 
-- [ ] Min rotation.
-- [ ] Max rotation.
-- [ ] Lock rotation.
-- [ ] Joint direction.
-- [ ] Prevent unnatural bending.
+✅ Parent and end-joint min/max rotation constraints.
 
----
+✅ IK pose можно сохранить keyframe.
 
-# Phase 10 — Mesh Deformation
+⬜ Explicit lock-rotation toggle.
 
-Не является обязательным для ранних версий.
+⬜ Multiple simultaneous IK chains.
 
-Позволит работать не только с персонажем, разбитым на части, но и деформировать цельные изображения.
+⬜ Advanced pole target object.
 
-- [ ] Generate mesh over sprite.
-- [ ] Mesh vertices.
-- [ ] Bone weights.
-- [ ] Weight painting.
-- [ ] Bone deformation.
-- [ ] Mesh preview.
-- [ ] Restore bind pose.
-
-Для этой части, вероятно, потребуется WebGL/PixiJS.
+⬜ Better unreachable-target handling / stretch modes.
 
 ---
 
-# Phase 11 — AI Sprite Sheet Fixer
+# Phase 10 — Mesh Deformation — 🟡 PARTIAL
 
-Цель — исправление проблем sprite sheets, созданных генеративными моделями.
+✅ Grid mesh over sprite.
 
-## Возможные функции
+✅ Vertices / triangles.
 
-- [ ] Автоматическое нахождение кадров.
-- [ ] Поиск и удаление лишнего фона.
-- [ ] Normalize canvas.
-- [ ] Auto Align.
-- [ ] Поиск кадров с отличающимися размерами персонажа.
-- [ ] Детектирование подозрительно сильно изменившегося силуэта.
-- [ ] Предупреждение о плохой loop-анимации.
-- [ ] Предложение ping-pong sequence.
+✅ Auto bone weights.
 
-Важно: базовые исправления должны выполняться локально и без AI API, если это возможно.
+✅ Weight painting MVP.
 
----
+✅ Bone-driven skinning.
 
-# Phase 12 — UX / Professional Tools
+✅ Mesh preview.
 
-- [ ] Undo / Redo.
-- [ ] Keyboard shortcuts.
-- [ ] Multi-select frames.
-- [ ] Context menu.
-- [ ] Snap to pixel.
-- [ ] Snap to guides.
-- [ ] Rulers.
-- [ ] Guides.
-- [ ] Fullscreen workspace.
-- [ ] Dark theme.
-- [ ] Responsive UI.
-- [ ] Desktop-friendly layout.
+✅ Restore bind pose.
 
-## Предлагаемая компоновка
+🟡 Сейчас это browser Canvas-oriented MVP.
 
-```text
-┌──────────────────────────────────────────────────────┐
-│ Sprite Sheet Studio                     Export ▼     │
-├──────────────────┬───────────────────────────────────┤
-│ Assets / Frames  │                                   │
-│                  │             Preview               │
-│ Sprite Sheet     │                                   │
-│ Animations       │                                   │
-│ Skeleton         │                                   │
-├──────────────────┴───────────────────────────────────┤
-│ Timeline                                             │
-│ [01] [02] [03] [04] [05] ...                        │
-├──────────────────────────────────────────────────────┤
-│ FPS 8   Loop ✓   Ping-Pong ☐   Scale 4×             │
-└──────────────────────────────────────────────────────┘
-```
+⬜ WebGL/PixiJS renderer для больших mesh.
+
+⬜ Better triangulation.
+
+⬜ Multi-bone weight normalization UI.
+
+⬜ Mesh topology editing tools.
 
 ---
 
-# Phase 13 — Performance
+# Phase 11 — AI Sprite Sheet Fixer — ✅ MVP DONE
 
-- [ ] Web Workers для GIF/APNG/WebP export.
-- [ ] Не блокировать UI во время экспорта.
-- [ ] Lazy decoding больших sprite sheets.
-- [ ] Object URL lifecycle management.
-- [ ] Ограничение RAM usage.
-- [ ] Работа с большими sprite atlases.
-- [ ] Progressive preview.
+Все базовые функции работают локально, без AI API.
+
+✅ Auto Slice integration.
+
+✅ Background cleanup для безопасно определяемого однотонного фона.
+
+✅ Normalize canvas.
+
+✅ Auto Align.
+
+✅ Detection резких изменений размера персонажа.
+
+✅ Silhouette-change diagnostics.
+
+✅ Loop-quality warning.
+
+✅ Ping-pong suggestion.
+
+⬜ Optional generative repair / inpainting через AI API.
+
+⬜ Frame similarity heatmap.
+
+⬜ Automatic duplicate / broken-frame detection.
 
 ---
 
-# Phase 14 — Optional Cloud Features
+# Phase 12 — UX / Professional Tools — 🟡 PARTIAL
 
-Эта часть требует backend и не должна быть обязательной для основного редактора.
+✅ Undo / Redo.
 
-- [ ] Аккаунты.
-- [ ] Cloud save.
-- [ ] Синхронизация проектов между устройствами.
-- [ ] Shared projects.
-- [ ] Team collaboration.
-- [ ] Version history.
+✅ Keyboard shortcuts.
+
+✅ Multi-select frames.
+
+✅ Context menu.
+
+✅ Pixel-oriented transforms.
+
+✅ Snap to guides.
+
+✅ Rulers.
+
+✅ Guides.
+
+✅ Fullscreen workspace.
+
+✅ Dark UI.
+
+✅ Responsive layout.
+
+✅ Desktop-first workspace.
+
+⬜ Named guides / guide manager.
+
+⬜ Custom shortcut editor.
+
+⬜ Command palette.
+
+⬜ Better touch/tablet editing.
+
+---
+
+# Phase 13 — Performance — 🟡 PARTIAL
+
+✅ GIF quantization / encoding в Web Worker.
+
+✅ Export progress.
+
+✅ UI остаётся доступным во время worker encoding.
+
+✅ Ограничение raw-memory для GIF.
+
+✅ Atlas dimension / pixel guard.
+
+✅ Timeline thumbnail backing canvases уменьшаются до реального thumbnail size.
+
+✅ Playback останавливается, когда вкладка скрыта.
+
+✅ Object URL cleanup для generated downloads/runtime blobs.
+
+⬜ Worker для APNG.
+
+⬜ Worker для Animated WebP после появления WebP encoder.
+
+⬜ Lazy decoding очень больших sprite sheets.
+
+⬜ Paged / multi-atlas export вместо отказа для огромного atlas.
+
+⬜ Progressive preview для огромных изображений.
+
+⬜ Более строгий общий RAM budget manager.
+
+---
+
+# Phase 14 — Optional Cloud Features — ⬜ TODO
+
+Backend остаётся **необязательным**.
+
+⬜ Accounts.
+
+⬜ Cloud save.
+
+⬜ Cross-device sync.
+
+⬜ Shared projects.
+
+⬜ Team collaboration.
+
+⬜ Version history.
 
 Принцип:
 
-> Основной редактор должен оставаться работоспособным без регистрации и без сервера.
+> Основной Sprite Sheet Studio должен оставаться полноценным без регистрации и без сервера.
 
 ---
 
-# Рекомендуемый порядок реализации
+# Phase 15 — Release Engineering — ⬜ TODO
 
-## Release 0.1 — MVP
+Этого блока не было в первоначальном roadmap, но он нужен перед публичным релизом.
 
-- Upload sprite sheet
-- Manual slice
-- Timeline
-- Preview
-- FPS
-- Loop
-- Ping-pong
-- GIF export
-- PNG sequence
-- Sprite sheet export
+⬜ Нормальный production build для branch-based Pages без runtime TypeScript stripping.
 
-## Release 0.2 — Smart Sprite Tools
+⬜ Automated smoke tests.
 
-- Auto Slice
-- Trim
-- Normalize
-- Anchor point
-- Auto Align
-- Pixel-perfect preview
+⬜ Test sprite fixtures.
 
-## Release 0.3 — Animation Editor
+⬜ Browser compatibility matrix.
 
-- Per-frame duration
-- Onion skin
-- Transform tools
-- Multiple animations
-- Project save/load
+⬜ Error boundary / diagnostics export.
 
-## Release 0.4 — Game Export
+⬜ Performance benchmark fixtures.
 
-- WebP
-- APNG
-- Atlas JSON
-- Godot export
-- Unity metadata
-- Phaser export
+⬜ Accessibility pass.
 
-## Release 0.5 — Rigging
+⬜ License.
 
-- Sprite parts
-- Bones
-- Parent hierarchy
-- Pivots
-- Bone attachments
+⬜ Versioning / changelog.
 
-## Release 0.6 — Skeletal Animation
+⬜ Release tags.
 
-- Bone keyframes
-- Timeline
-- Interpolation
-- Animation library
+---
 
-## Release 0.7 — IK
+# Ближайший порядок работ
 
-- Two-bone IK
-- Joint constraints
-- Hand/foot targets
+## Release 0.4 — Stabilization
 
-## Release 0.8 — Advanced Rigging
+1. Убрать runtime TypeScript stripping и сделать стабильный production bundle для `Deploy from a branch`.
+2. Добавить smoke tests для загрузки, playback и каждого export.
+3. Сделать multi-atlas export для больших проектов.
+4. Добавить custom anchor.
+5. Довести IK constraints.
+6. Добавить Animated WebP, если browser-side encoder будет достаточно надёжным.
 
-- Mesh deformation
-- Bone weights
-- More advanced constraints
+## Release 0.5 — Rigging polish
+
+1. Scale keyframes.
+2. Curve editor.
+3. Multiple IK chains.
+4. Better mesh editor.
+5. Rig/project integration в `.sss`.
 
 ## Release 1.0
 
-Sprite Sheet Studio становится полноценным браузерным инструментом:
+Цель первого стабильного релиза:
 
-> **Sprite Sheet Editor + Animation Studio + Lightweight 2D Rigging Tool**
-
----
-
-# Что НЕ нужно делать в первой версии
-
-Чтобы проект не разросся до аналога Spine до появления рабочего продукта, в MVP не входят:
-
-- аккаунты;
-- backend;
-- collaborative editing;
-- mesh deformation;
-- IK;
-- AI API;
-- сложный skeletal rigging;
-- полноценный pixel-art editor.
-
-Сначала необходимо сделать максимально качественный workflow:
-
-> **Upload → Slice → Preview → Export**
-
-После него:
-
-> **Trim → Align → Animate → Game Export**
-
-И только затем:
-
-> **Rig → Keyframes → IK → Mesh Deformation**
-
----
-
-# Product Positioning
-
-Не позиционировать проект только как конвертер sprite sheet в GIF.
-
-Более сильная формулировка:
-
-> **Turn sprite sheets into game-ready animations.**
-
-или:
-
-> **Prepare, fix, animate and export 2D sprites directly in your browser.**
-
-Главное преимущество первой версии:
-
-- работает в браузере;
-- не требует установки;
-- не требует аккаунта;
-- изображения остаются на устройстве;
-- ориентирован именно на game-dev workflow.
+- sprite sheet / frame workflow;
+- cleanup / Auto Align;
+- animation editor;
+- local projects;
+- GIF / APNG / PNG / atlas exports;
+- Godot / Phaser / Unity metadata;
+- basic rigging + skeletal animation + IK;
+- stable GitHub Pages build;
+- no mandatory backend;
+- documented limits and tested browser support.
