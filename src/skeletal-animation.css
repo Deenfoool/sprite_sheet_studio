@@ -1,0 +1,55 @@
+.skeletal-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.skeletal-toolbar .select { width: 118px; height: 30px; font-size: 10px; }
+.skeletal-toolbar .btn { min-height: 30px; height: 30px; padding: 0 8px; }
+.skeletal-toolbar .skeletal-fps { width: 58px; }
+
+.skeletal-timeline {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 8;
+  border: 1px solid #243951;
+  border-radius: 10px;
+  background: rgba(8, 14, 23, .93);
+  box-shadow: 0 14px 40px rgba(0,0,0,.35);
+  backdrop-filter: blur(12px);
+  padding: 9px 10px 10px;
+}
+.skeletal-timeline-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 7px;
+}
+.skeletal-time-label { color: #8ca0b9; font-size: 9px; font-weight: 700; }
+.skeletal-key-actions { display: flex; gap: 5px; }
+.skeletal-key-actions .btn { min-height: 27px; height: 27px; padding: 0 8px; font-size: 9px; }
+.skeletal-track-wrap { position: relative; height: 42px; }
+.skeletal-range { width: 100%; margin: 13px 0 0; accent-color: #1687ff; }
+.skeletal-markers { position: absolute; left: 4px; right: 4px; top: 2px; height: 12px; pointer-events: none; }
+.skeletal-marker {
+  position: absolute;
+  top: 0;
+  width: 8px;
+  height: 8px;
+  transform: translateX(-50%) rotate(45deg);
+  border-radius: 1px;
+  background: #21c79b;
+  box-shadow: 0 0 7px rgba(33,199,155,.45);
+}
+.skeletal-marker.current { background: #67c5ff; box-shadow: 0 0 8px rgba(103,197,255,.65); }
+.skeletal-footer { display: flex; align-items: center; justify-content: space-between; gap: 9px; color: #657994; font-size: 9px; }
+.skeletal-interp { display: flex; align-items: center; gap: 6px; }
+.skeletal-interp select { height: 25px; border-radius: 6px; border: 1px solid #273b53; background: #0a1320; color: #aebed2; font-size: 9px; }
+
+@media (max-width: 720px) {
+  .skeletal-timeline { position: sticky; left: auto; right: auto; bottom: 0; margin-top: 10px; }
+  .skeletal-toolbar .skeletal-fps { display: none; }
+}
