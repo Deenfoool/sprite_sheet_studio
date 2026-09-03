@@ -1,0 +1,22 @@
+.mesh-panel { border-top: 1px solid #203249; }
+.mesh-status {
+  margin: 8px 0;
+  padding: 8px;
+  border-radius: 7px;
+  border: 1px solid #253a52;
+  background: #0a1522;
+  color: #7488a1;
+  font-size: 9px;
+  line-height: 1.45;
+}
+.mesh-status.active { color: #9adccf; border-color: #2a604f; background: #0b1e1b; }
+.mesh-mode-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.mesh-mode-row .btn.active { border-color: #1f8cd2; background: #103256; color: #8bd1ff; }
+.mesh-grid-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.mesh-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 7px; }
+.mesh-brush { display: grid; grid-template-columns: 1fr 72px; gap: 7px; }
+.mesh-legend { display: flex; gap: 10px; flex-wrap: wrap; color: #687d97; font-size: 8px; margin-top: 7px; }
+.mesh-legend span::before { content: '●'; margin-right: 4px; }
+.mesh-legend .vertex::before { color: #64d8b8; }
+.mesh-legend .selected::before { color: #ffcf5b; }
+.mesh-legend .weighted::before { color: #66baff; }
