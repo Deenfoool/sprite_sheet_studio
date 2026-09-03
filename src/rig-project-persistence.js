@@ -52,12 +52,127 @@
     };
   }
 
+  function clonePlain(value, fallback = null) {
+    try { return JSON.parse(JSON.stringify(value)); } catch { return fallback; }
+  }
+
+  function serializeMesh() {
+    const mesh = globalThis.__SSSMesh?.state;
+    if (!mesh) return null;
+    return {
+      version: 1,
+      enabled: Boolean(mesh.enabled),
+      partId: mesh.partId || null,
+      cols: Number(mesh.cols) || 5,
+      rows: Number(mesh.rows) || 7,
+      mode: mesh.mode || 'paint',
+      selectedBoneId: mesh.selectedBoneId || 'root',
+      selectedVertexIndex: Number(mesh.selectedVertexIndex) || 0,
+      brushWeight: Number.isFinite(Number(mesh.brushWeight)) ? Number(mesh.brushWeight) : 1,
+      brushRadius: Number.isFinite(Number(mesh.brushRadius)) ? Number(mesh.brushRadius) : 42,
+      showWire: mesh.showWire !== false,
+      vertices: Array.isArray(mesh.vertices) ? mesh.vertices.map((vertex) => ({
+        u: Number(vertex.u) || 0,
+        v: Number(vertex.v) || 0,
+        offsetX: Number(vertex.offsetX) || 0,
+        offsetY: Number(vertex.offsetY) || 0,
+        weights: Object.fromEntries(Object.entries(vertex.weights || {}).map(([id, value]) => [id, Number(value) || 0]))
+      })) : [],
+      triangles: Array.isArray(mesh.triangles) ? mesh.triangles.map((triangle) => triangle.map((index) => Number(index) || 0)) : [],
+      bindWorld: clonePlain(mesh.bindWorld, {}),
+      bindLocals: clonePlain(mesh.bindLocals, {}),
+      bindPart: clonePlain(mesh.bindPart, null)
+    };
+  }
+
+  function resetMesh() {
+    const mesh = globalThis.__SSSMesh?.state;
+    if (!mesh) return;
+    mesh.enabled = false;
+    mesh.partId = null;
+    mesh.cols = 5;
+    mesh.rows = 7;
+    mesh.vertices = [];
+    mesh.triangles = [];
+    mesh.bindWorld = {};
+    mesh.bindLocals = {};
+    mesh.bindPart = null;
+    mesh.mode = 'paint';
+    mesh.selectedBoneId = 'root';
+    mesh.selectedVertexIndex = 0;
+    mesh.brushWeight = 1;
+    mesh.brushRadius = 42;
+    mesh.showWire = true;
+    mesh.draggingVertex = -1;
+    mesh.lastPointer = null;
+    const enable = document.querySelector('#meshEnable');
+    if (enable instanceof HTMLInputElement) enable.checked = false;
+    rigApi.draw();
+    globalThis.__SSSMeshTopology?.selectVertex?.(0);
+  }
+
+  function restoreMesh(data) {
+    const mesh = globalThis.__SSSMesh?.state;
+    if (!mesh || !data || data.version !== 1) return;
+    const validPart = rigApi.state.parts.some((part) => part.id === data.partId) ? data.partId : (rigApi.state.parts[0]?.id || null);
+    const validBone = rigApi.state.bones.some((bone) => bone.id === data.selectedBoneId) ? data.selectedBoneId : (rigApi.state.bones[0]?.id || 'root');
+    mesh.enabled = Boolean(data.enabled && validPart);
+    mesh.partId = validPart;
+    mesh.cols = Math.max(1, Math.min(64, Number(data.cols) || 5));
+    mesh.rows = Math.max(1, Math.min(64, Number(data.rows) || 7));
+    mesh.mode = data.mode === 'move' ? 'move' : 'paint';
+    mesh.selectedBoneId = validBone;
+    mesh.selectedVertexIndex = Math.max(0, Number(data.selectedVertexIndex) || 0);
+    mesh.brushWeight = Math.max(0, Math.min(1, Number(data.brushWeight ?? 1)));
+    mesh.brushRadius = Math.max(1, Number(data.brushRadius) || 42);
+    mesh.showWire = data.showWire !== false;
+    mesh.vertices = Array.isArray(data.vertices) ? data.vertices.map((vertex) => ({
+      u: Number(vertex.u) || 0,
+      v: Number(vertex.v) || 0,
+      offsetX: Number(vertex.offsetX) || 0,
+      offsetY: Number(vertex.offsetY) || 0,
+      weights: Object.fromEntries(Object.entries(vertex.weights || {}).filter(([id]) => rigApi.state.bones.some((bone) => bone.id === id)).map(([id, value]) => [id, Math.max(0, Number(value) || 0)]))
+    })) : [];
+    mesh.triangles = Array.isArray(data.triangles)
+      ? data.triangles.filter((triangle) => Array.isArray(triangle) && triangle.length === 3).map((triangle) => triangle.map((index) => Number(index) || 0)).filter((triangle) => triangle.every((index) => index >= 0 && index < mesh.vertices.length) && new Set(triangle).size === 3)
+      : [];
+    mesh.bindWorld = clonePlain(data.bindWorld, {});
+    mesh.bindLocals = clonePlain(data.bindLocals, {});
+    mesh.bindPart = clonePlain(data.bindPart, null);
+    mesh.draggingVertex = -1;
+    mesh.lastPointer = null;
+
+    const enable = document.querySelector('#meshEnable');
+    const partSelect = document.querySelector('#meshPart');
+    const cols = document.querySelector('#meshCols');
+    const rows = document.querySelector('#meshRows');
+    const bone = document.querySelector('#meshBone');
+    const weight = document.querySelector('#meshWeight');
+    const weightNumber = document.querySelector('#meshWeightNumber');
+    const radius = document.querySelector('#meshRadius');
+    const wire = document.querySelector('#meshWire');
+    if (enable instanceof HTMLInputElement) enable.checked = mesh.enabled;
+    if (partSelect instanceof HTMLSelectElement && validPart) partSelect.value = validPart;
+    if (cols instanceof HTMLInputElement) cols.value = String(mesh.cols);
+    if (rows instanceof HTMLInputElement) rows.value = String(mesh.rows);
+    if (bone instanceof HTMLSelectElement) bone.value = validBone;
+    if (weight instanceof HTMLInputElement) weight.value = String(mesh.brushWeight);
+    if (weightNumber instanceof HTMLInputElement) weightNumber.value = String(mesh.brushWeight);
+    if (radius instanceof HTMLInputElement) radius.value = String(mesh.brushRadius);
+    if (wire instanceof HTMLInputElement) wire.checked = mesh.showWire;
+
+    rigApi.render();
+    rigApi.draw();
+    globalThis.__SSSMeshTopology?.selectVertex?.(Math.min(mesh.selectedVertexIndex, Math.max(0, mesh.vertices.length - 1)));
+  }
+
   function serializeExtras() {
     return {
-      version: 2,
+      version: 3,
       rigging: serialize(),
       skeletal: globalThis.__SSSSkeletal?.serialize?.() ?? null,
       ik: globalThis.__SSSIK?.serialize?.() ?? null,
+      mesh: serializeMesh(),
       savedAt: new Date().toISOString()
     };
   }
@@ -115,13 +230,15 @@
   }
 
   async function restoreExtras(extras) {
-    if (!extras || ![1, 2].includes(extras.version)) return;
+    if (!extras || ![1, 2, 3].includes(extras.version)) return;
     restoringExtras = true;
     try {
       if (extras.rigging) await restore(extras.rigging);
       if (extras.skeletal) globalThis.__SSSSkeletal?.restore?.(extras.skeletal);
       if (extras.ik) globalThis.__SSSIK?.restore?.(extras.ik);
       else globalThis.__SSSIK?.reset?.();
+      if (extras.mesh) restoreMesh(extras.mesh);
+      else resetMesh();
     } finally {
       restoringExtras = false;
     }
@@ -145,6 +262,7 @@
     rig.parts = [];
     rig.selectedBoneId = 'root';
     rig.selectedPartId = null;
+    resetMesh();
     rigApi.render();
     rigApi.draw();
   }
@@ -228,6 +346,7 @@
         data.rigging = extras.rigging;
         data.skeletal = extras.skeletal;
         data.ik = extras.ik;
+        data.mesh = extras.mesh;
         data.projectFormat = 'sss-full-project';
         downloadProject(data, projectFileName(data));
         void putExtras(extras);
@@ -243,6 +362,7 @@
         reset();
         globalThis.__SSSSkeletal?.reset?.();
         globalThis.__SSSIK?.reset?.();
+        resetMesh();
         scheduleExtrasSave();
       }, 0);
       return;
@@ -270,10 +390,11 @@
         try {
           const data = JSON.parse(await file.text());
           const extras = {
-            version: 2,
+            version: 3,
             rigging: data.rigging || data.extensions?.rigging || null,
             skeletal: data.skeletal || data.extensions?.skeletal || null,
-            ik: data.ik || data.extensions?.ik || null
+            ik: data.ik || data.extensions?.ik || null,
+            mesh: data.mesh || data.extensions?.mesh || null
           };
 
           const status = document.querySelector('.project-status');
@@ -342,6 +463,6 @@
     }, 2500);
   }
 
-  globalThis.__SSSRigPersistence = { serialize, restore, reset, serializeExtras, restoreExtras };
+  globalThis.__SSSRigPersistence = { serialize, restore, reset, serializeExtras, restoreExtras, serializeMesh, restoreMesh, resetMesh };
   void restoreAutosavedExtrasWhenReady();
 })();
