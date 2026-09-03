@@ -4,6 +4,7 @@ const zipModuleUrl = new URL('./zip-store.js', import.meta.url).href;
 const toolsModuleUrl = new URL('./sprite-tools.js', import.meta.url).href;
 const extensionUrl = new URL('./editor-extensions.js', import.meta.url);
 const engineExportsUrl = new URL('./engine-exports.js', import.meta.url);
+const riggingUrl = new URL('./rigging.js', import.meta.url);
 
 function showFatal(error) {
   console.error('[Sprite Sheet Studio] startup failed', error);
@@ -84,12 +85,13 @@ async function boot() {
   }
 
   const sourceUrl = new URL('./main-v2.ts', import.meta.url);
-  const [source, extension, engineExports] = await Promise.all([
+  const [source, extension, engineExports, rigging] = await Promise.all([
     fetchText(sourceUrl, 'editor source'),
     fetchText(extensionUrl, 'project system'),
-    fetchText(engineExportsUrl, 'engine exporters')
+    fetchText(engineExportsUrl, 'engine exporters'),
+    fetchText(riggingUrl, 'bone rigging workspace')
   ]);
-  const js = `${stripMainTypeScript(source)}\n\n${exposeProjectBridge(extension)}\n\n${engineExports}`;
+  const js = `${stripMainTypeScript(source)}\n\n${exposeProjectBridge(extension)}\n\n${engineExports}\n\n${rigging}`;
 
   const blobUrl = URL.createObjectURL(new Blob([`${js}\n//# sourceURL=sprite-sheet-studio-runtime.js`], { type: 'text/javascript' }));
   try {
