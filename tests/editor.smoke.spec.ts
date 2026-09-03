@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { test, expect } from '@playwright/test';
 
-async function loadFourFrameFixture(page) {
+async function setFourFrameFixture(page) {
   const encoded = await readFile('tests/fixtures/transparent-4-frame-sheet.png.base64', 'utf8');
   const buffer = Buffer.from(encoded.trim(), 'base64');
   await page.locator('#fileInput').setInputFiles({
@@ -10,6 +10,10 @@ async function loadFourFrameFixture(page) {
     buffer
   });
   await expect(page.locator('#sourceName')).toContainText('transparent-4-frame-sheet.png');
+}
+
+async function loadFourFrameFixture(page) {
+  await setFourFrameFixture(page);
   await page.locator('#autoSliceBtn').click();
   await expect(page.locator('#colsInput')).toHaveValue('4');
   await expect(page.locator('#rowsInput')).toHaveValue('1');
@@ -27,6 +31,7 @@ test('boots the complete editor runtime without page errors', async ({ page }) =
   await expect(page.locator('#bgSelect option[value="custom"]')).toHaveCount(1);
   await expect(page.locator('[data-source-cell-status]')).toBeAttached();
   await expect(page.getByRole('button', { name: /Trim current/i })).toBeAttached();
+  await expect(page.getByRole('button', { name: /Object Slice/i })).toBeAttached();
 
   await expect(page.getByRole('button', { name: /Rigging/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /Diagnostics/i })).toBeVisible();
@@ -44,6 +49,17 @@ test('loads a real transparent sprite sheet and auto-slices four frames', async 
   await loadFourFrameFixture(page);
   await expect(page.locator('#frames .frame-card')).toHaveCount(4);
   await expect(page.locator('#frameCount')).toHaveText('4');
+});
+
+test('Object Slice detects irregular foreground objects without a manual grid', async ({ page }) => {
+  await page.goto('/');
+  await setFourFrameFixture(page);
+  const objectSlice = page.getByRole('button', { name: /Object Slice/i });
+  await expect(objectSlice).toBeEnabled();
+  await objectSlice.click();
+  await expect(page.locator('#frames .frame-card')).toHaveCount(4);
+  await expect(page.locator('#sourceName')).toContainText('4 separate frames');
+  await expect(page.locator('#smartStatus')).toContainText('Object Slice found 4');
 });
 
 test('source sheet cells can be excluded and restored by clicking the grid', async ({ page }) => {
@@ -180,7 +196,7 @@ test('built-in diagnostics complete and can export a report', async ({ page }) =
   const summary = page.locator('[data-diag-summary]');
   await expect(summary).toContainText('passed');
   const diagnosticsCount = await page.locator('.sss-diagnostics-row').count();
-  expect(diagnosticsCount).toBeGreaterThanOrEqual(23);
+  expect(diagnosticsCount).toBeGreaterThanOrEqual(26);
 
   const reportDownload = page.waitForEvent('download');
   await page.getByRole('button', { name: /Export report JSON/i }).click();
