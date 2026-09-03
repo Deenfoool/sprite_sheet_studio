@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "fflate": "^0.8.2",
     "gifenc": "^1.0.3"
   },
   "devDependencies": {
