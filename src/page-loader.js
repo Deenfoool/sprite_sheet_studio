@@ -4,6 +4,7 @@ const zipModuleUrl = new URL('./zip-store.js', import.meta.url).href;
 const toolsModuleUrl = new URL('./sprite-tools.js', import.meta.url).href;
 const extensionUrl = new URL('./editor-extensions.js', import.meta.url);
 const engineExportsUrl = new URL('./engine-exports.js', import.meta.url);
+const apngExportUrl = new URL('./apng-export.js', import.meta.url);
 const aiFixerUrl = new URL('./ai-fixer.js', import.meta.url);
 const uxToolsUrl = new URL('./ux-tools.js', import.meta.url);
 const performanceUrl = new URL('./performance.js', import.meta.url);
@@ -98,10 +99,11 @@ async function boot() {
   }
 
   const sourceUrl = new URL('./main-v2.ts', import.meta.url);
-  const [source, extension, engineExports, aiFixer, uxTools, performanceTools, rigging, skeletalAnimation, mesh, ik] = await Promise.all([
+  const [source, extension, engineExports, apngExport, aiFixer, uxTools, performanceTools, rigging, skeletalAnimation, mesh, ik] = await Promise.all([
     fetchText(sourceUrl, 'editor source'),
     fetchText(extensionUrl, 'project system'),
     fetchText(engineExportsUrl, 'engine exporters'),
+    fetchText(apngExportUrl, 'APNG exporter'),
     fetchText(aiFixerUrl, 'AI sprite fixer'),
     fetchText(uxToolsUrl, 'professional editor tools'),
     fetchText(performanceUrl, 'performance tools'),
@@ -110,7 +112,7 @@ async function boot() {
     fetchText(meshUrl, 'mesh deformation'),
     fetchText(ikUrl, 'inverse kinematics')
   ]);
-  const js = `${stripMainTypeScript(source)}\n\n${exposeProjectBridge(extension)}\n\n${engineExports}\n\n${aiFixer}\n\n${uxTools}\n\n${performanceTools}\n\n${exposeRigBridge(rigging)}\n\n${skeletalAnimation}\n\n${mesh}\n\n${ik}`;
+  const js = `${stripMainTypeScript(source)}\n\n${exposeProjectBridge(extension)}\n\n${engineExports}\n\n${apngExport}\n\n${aiFixer}\n\n${uxTools}\n\n${performanceTools}\n\n${exposeRigBridge(rigging)}\n\n${skeletalAnimation}\n\n${mesh}\n\n${ik}`;
 
   const blobUrl = URL.createObjectURL(new Blob([`${js}\n//# sourceURL=sprite-sheet-studio-runtime.js`], { type: 'text/javascript' }));
   try {
