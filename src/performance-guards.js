@@ -52,10 +52,15 @@
     return { count, width, height, pixels: width * height };
   }
 
+  function isPagedAtlas(label) {
+    return label.includes('multi-atlas') || label.includes('paged png');
+  }
+
   function guardAtlasClick(event) {
     const button = event.target instanceof Element ? event.target.closest('button') : null;
     if (!button) return;
     const label = (button.textContent || '').toLowerCase();
+    if (isPagedAtlas(label)) return;
     if (!label.includes('atlas') && !label.includes('phaser')) return;
 
     const estimate = atlasEstimate();
@@ -65,7 +70,7 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     const megaPixels = (estimate.pixels / 1_000_000).toFixed(1);
-    toast(`Atlas ${estimate.width}×${estimate.height} (${megaPixels} MP) is too large for a safe browser export. Split the project or reduce frame size.`, true);
+    toast(`Atlas ${estimate.width}×${estimate.height} (${megaPixels} MP) is too large for a safe single-canvas export. Use Multi-atlas instead.`, true);
   }
 
   document.addEventListener('click', guardAtlasClick, true);
@@ -76,8 +81,9 @@
     const rawMb = Math.round((estimate.pixels * 4) / 1024 / 1024);
     document.querySelectorAll('.export-grid button').forEach((button) => {
       const label = (button.textContent || '').toLowerCase();
+      if (isPagedAtlas(label)) return;
       if (!label.includes('atlas') && !label.includes('phaser')) return;
-      if (rawMb >= 128) button.title = `Estimated uncompressed atlas memory: ~${rawMb} MB`;
+      if (rawMb >= 128) button.title = `Estimated uncompressed atlas memory: ~${rawMb} MB · use Multi-atlas for large projects`;
       else if (button.title.startsWith('Estimated uncompressed atlas memory:')) button.removeAttribute('title');
     });
   }
