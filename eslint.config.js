@@ -4,7 +4,14 @@ import tseslint from 'typescript-eslint';
 
 export default [
   {
-    ignores: ['dist/**', 'node_modules/**', 'test-results/**', 'playwright-report/**', 'blob-report/**']
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'test-results/**',
+      'playwright-report/**',
+      'blob-report/**',
+      'src/runtime.bundle.js'
+    ]
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -17,8 +24,7 @@ export default [
       }
     },
     rules: {
-      // Extension modules are intentionally concatenated into the editor runtime by page-loader.js.
-      // Names such as state/el/toast are therefore lexical runtime dependencies, not browser globals.
+      // Runtime extension modules intentionally share the editor lexical runtime when the committed bundle is generated.
       'no-undef': 'off',
       'no-unused-vars': 'off'
     }
@@ -30,7 +36,7 @@ export default [
     }
   },
   {
-    files: ['tests/**/*.ts', 'playwright.config.ts', 'eslint.config.js'],
+    files: ['tests/**/*.ts', 'playwright.config.ts', 'eslint.config.js', 'scripts/**/*.mjs'],
     languageOptions: {
       globals: globals.node
     }
