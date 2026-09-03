@@ -1,135 +1,267 @@
 # Sprite Sheet Studio
 
-**Sprite Sheet Studio** is a local-first browser tool for turning sprite sheets, separate frames and layered 2D character parts into game-ready animation assets.
+**Sprite Sheet Studio** is a local-first browser editor for turning sprite sheets, separate frames and layered 2D character parts into game-ready animation assets.
 
-> Upload → Slice → Align → Animate → Rig → Export
+> **Upload → Slice → Fix → Animate → Rig → Export**
 
-## Current status
+The project has moved far beyond the original GIF-converter MVP. It now combines frame animation, sprite cleanup, local projects, engine exports, 2D rigging, skeletal keyframes, IK and mesh deformation in one static browser application.
 
-The project has moved beyond the original MVP. The browser editor now covers frame animation, local projects, engine-oriented export, bone rigging, skeletal keyframes and two-bone IK.
+## Highlights
 
-### Import & slicing
+- Fully client-side workflow — sprite images are not uploaded to an application server.
+- Works on GitHub Pages using **Deploy from a branch**.
+- Sprite-sheet and separate-frame workflows.
+- Smart cleanup for AI-generated sprite sheets.
+- Multi-animation projects with autosave.
+- Game-engine-oriented export.
+- Bone rigging, skeletal animation, IK and basic mesh skinning.
 
-- PNG / WebP import
-- Drag & drop and clipboard image paste
-- Sprite sheet or multiple separate frames
-- Manual rows / columns slicing
-- Padding and spacing controls
-- Visual slicing grid
-- Auto Slice based on transparent separators and grid regularity
-- Natural sorting for separate frame files
+---
 
-### Cleanup & frame editor
+## Import & slicing
 
-- Transparent-edge trim
-- Auto Align by feet / bottom center, bounding center or alpha-weighted center of mass
-- Shared normalized canvas
-- Opaque-bounds diagnostics
-- Per-frame hold multiplier
-- Onion skin with adjustable opacity
-- Flip X / Flip Y / Rotate 90°
-- Pixel-perfect one-pixel move
-- Crop current frame
-- Resize canvas
-- Nearest-neighbour ×2 / ×3 / ×4 scaling
-- Apply current hold to all frames
-- Loop / ping-pong / once playback
+- PNG / WebP import.
+- Drag & drop.
+- Clipboard paste.
+- One sprite sheet or multiple separate frames.
+- Natural filename sorting (`idle_01.png`, `idle_02.png`, ...).
+- Manual rows / columns.
+- Padding and spacing controls.
+- Visual slicing grid.
+- **Auto Slice** using transparent separators and grid regularity.
+- Confidence feedback with manual fallback.
 
-### Project System
+## Cleanup & alignment
 
-- Multiple named animations in one project
-- Suggested animation workflow: `idle`, `walk`, `run`, `attack`, `death`
-- Custom animation names
-- Undo / Redo
-- IndexedDB autosave
-- Automatic restore of the last project
-- Export project as `.sss`
-- Import `.sss`
-- Project naming
-- Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z and Ctrl/Cmd+S shortcuts
+- Trim transparent borders.
+- Shared normalized canvas.
+- Opaque-bounds diagnostics.
+- Auto Align by:
+  - feet / bottom center;
+  - bounding-box center;
+  - alpha-weighted center of mass;
+  - **custom per-frame anchor points** picked directly on the preview.
+- Custom anchors can be copied to all frames and are persisted in project autosave / `.sss` files.
 
-### Export
+## Frame animation editor
 
-Frame exports:
+- Pixel-perfect animation preview.
+- FPS control.
+- Loop / Ping-pong / Once.
+- Per-frame hold multiplier.
+- Onion skin with adjustable opacity.
+- Timeline drag-to-reorder.
+- Multi-select frames.
+- Context menu.
+- Duplicate / delete / reverse.
+- Flip X / Flip Y.
+- Rotate 90°.
+- Pixel move.
+- Crop current frame.
+- Resize canvas.
+- Nearest-neighbour ×2 / ×3 / ×4 scaling.
+- Checkerboard / white / black preview backgrounds.
+- Rulers and guides.
+- Snap to guides.
+- Fullscreen workspace.
 
-- Animated GIF
-- Horizontal sprite sheet PNG
-- PNG sequence ZIP
+---
 
-Extended / engine exports:
+## Project System
 
-- Atlas PNG + JSON ZIP
-- Engine-agnostic animation metadata JSON
-- Godot pack with PNG frames and `SpriteFrames` `.tres`
-- Phaser atlas PNG + JSON pack
-- Unity slicing / animation metadata JSON
+A single project can contain multiple named animations such as:
 
-All export processing remains client-side.
+```text
+idle
+walk
+run
+attack
+death
+custom-animation
+```
 
-### Bone Rigging MVP
+Features:
+
+- Multiple animation clips.
+- Custom animation names.
+- Project naming.
+- Undo / Redo.
+- IndexedDB autosave.
+- Automatic restore of the last local project.
+- Export project as `.sss`.
+- Import `.sss`.
+- Keyboard shortcuts:
+  - `Ctrl/Cmd + Z` — Undo;
+  - `Ctrl/Cmd + Shift + Z` / `Ctrl/Cmd + Y` — Redo;
+  - `Ctrl/Cmd + S` — export `.sss`.
+
+---
+
+## AI Sprite Sheet Fixer
+
+The current fixer intentionally performs its basic work **locally without an AI API**.
+
+It can:
+
+- integrate Auto Slice;
+- remove a safely detected flat background;
+- normalize canvases;
+- Auto Align frames;
+- detect suspicious character-size changes;
+- flag abrupt silhouette changes;
+- warn about a poor animation loop;
+- suggest Ping-pong when it is likely to loop better.
+
+This is especially useful for sprite sheets produced by generative image models where the subject shifts slightly between frames.
+
+---
+
+## Export
+
+### Frame / animation formats
+
+- Animated GIF.
+- **APNG**.
+- Horizontal sprite sheet PNG.
+- PNG sequence ZIP.
+
+### Atlas / metadata
+
+- Atlas PNG + JSON ZIP.
+- Engine-agnostic animation metadata JSON.
+- **Aseprite-compatible atlas JSON with `frameTags`**.
+
+### Godot
+
+- PNG frames grouped by animation.
+- Generated `SpriteFrames` `.tres`.
+- FPS / loop / frame-hold data.
+
+### Phaser
+
+- Atlas PNG + JSON.
+- Named animation/frame metadata.
+- FPS / repeat / ping-pong information.
+
+### Unity
+
+- Sprite slicing / animation metadata helper JSON.
+
+All exports are produced in the browser.
+
+---
+
+## Bone Rigging
 
 Open the **Rigging** workspace from the top bar.
 
-- Root bone
-- Add / delete bones
-- Parent / child hierarchy
-- Bone offset
-- Bone rotation
-- Bone length
-- Bone visibility
-- Drag bone joints to reposition them
-- Drag bone endpoints to rotate and resize bones
-- Load multiple transparent PNG / WebP character parts
-- Bind a sprite part to a bone
-- Part offset and rotation
-- Part pivot X / Y
-- Z-order
-- Opacity
-- Visibility
-- Export rig JSON
+### Skeleton
 
-### Skeletal Animation
+- Root bone.
+- Add / delete bones.
+- Parent / child hierarchy.
+- Bone offset / pivot.
+- Rotation.
+- Bone length.
+- Visibility.
+- Mouse repositioning and endpoint manipulation.
 
-Inside the Rigging workspace:
+### Sprite parts
 
-- Multiple skeletal animations
-- Bone position / rotation / length keyframes
-- Sprite position / rotation / opacity / visibility keyframes
-- Timeline scrubbing
-- Playback
-- Per-animation FPS and length
-- Looping
-- Step interpolation
-- Linear interpolation
-- Ease in/out interpolation
-- Copy / paste poses
-- Duplicate animation
-- Mirror animation
-- Export skeletal animation library JSON
+- Load transparent PNG / WebP character parts.
+- Bind a sprite part to a bone.
+- Part pivot X / Y.
+- Offset and rotation.
+- Z-order.
+- Opacity.
+- Visibility.
+- Rig JSON export.
 
-### Inverse Kinematics
+---
 
-- Two-bone IK chains
-- Typical chains: shoulder → forearm and thigh → shin
-- Draggable IK target
-- Bend / pole direction
-- Parent-joint min/max rotation constraints
-- End-joint min/max rotation constraints
-- IK result can be captured as a skeletal keyframe
+## Skeletal Animation
+
+- Multiple skeletal animation clips.
+- Bone position / rotation / length keyframes.
+- Sprite position / rotation / opacity / visibility keyframes.
+- Timeline scrubbing and playback.
+- Per-animation FPS and clip length.
+- Looping.
+- Step interpolation.
+- Linear interpolation.
+- Ease in/out interpolation.
+- Copy / paste pose.
+- Duplicate animation.
+- Mirror animation.
+- Skeletal animation library JSON export.
+
+---
+
+## Inverse Kinematics
+
+- Two-bone IK.
+- Arm and leg chains.
+- Draggable IK target.
+- Bend / pole direction.
+- Parent-joint min/max rotation constraints.
+- End-joint min/max rotation constraints.
+- IK result can be captured as a skeletal keyframe.
+
+---
+
+## Mesh Deformation MVP
+
+- Grid mesh over a sprite.
+- Vertices / triangles.
+- Automatic bone weights.
+- Weight painting.
+- Bone-driven skinning.
+- Mesh preview.
+- Restore bind pose.
+
+This is still an MVP and currently uses the browser-oriented rendering path. A more advanced WebGL/PixiJS implementation is planned for larger meshes.
+
+---
+
+## Performance
+
+- GIF quantization / encoding runs in a **Web Worker**.
+- GIF export progress indicator.
+- Raw GIF-memory limit guard.
+- Atlas dimension / pixel guard.
+- Timeline thumbnail backing canvases are compacted instead of retaining full-size frame canvases.
+- Playback pauses when the browser tab is hidden.
+- Generated Object URLs are cleaned up.
+
+Large atlas projects are currently rejected when they exceed a safe browser canvas budget; paged/multi-atlas export is planned.
+
+---
 
 ## Auto Slice limitations
 
-Auto Slice is intentionally conservative. It works best with transparent sprite sheets that have clearly separated frames. Sheets with solid backgrounds, overlapping sprites or highly irregular placement may still require the manual grid.
+Auto Slice is intentionally conservative. It works best when frames are separated by transparent gutters.
+
+A sheet with a solid background, overlapping sprites, highly irregular placement or different cell sizes may still need manual grid settings. The AI Fixer can remove some simple flat backgrounds before slicing, but it is not a general segmentation model.
+
+---
 
 ## GitHub Pages
 
-The repository is prepared for **Deploy from a branch** mode:
+The repository is prepared for **Deploy from a branch**:
 
 - Source: `Deploy from a branch`
 - Branch: `main`
 - Folder: `/(root)`
 
-The Pages runtime does not require a TypeScript compiler or external module CDN at startup.
+The Pages runtime does not require a TypeScript compiler or third-party module CDN at startup.
+
+Current public path:
+
+```text
+https://deenfoool.github.io/sprite_sheet_studio/
+```
+
+---
 
 ## Run locally
 
@@ -144,23 +276,40 @@ Production build:
 npm run build
 ```
 
+The long-term release plan is to replace the current branch-runtime source transformation with a committed production bundle while keeping GitHub Pages in branch-deploy mode.
+
+---
+
 ## Privacy
 
-Imported sprites are decoded and processed in the browser. Sprite assets are not uploaded to a server by the application.
+Imported sprites are decoded and processed in the browser. The application does not require an account or backend for its main editor workflow.
+
+---
 
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md). The next major area is mesh deformation / skinning, followed by AI-oriented sprite-sheet diagnostics and further professional editor tooling.
+See [ROADMAP.md](./ROADMAP.md) for the live `DONE / PARTIAL / TODO` status of every phase.
+
+Current focus:
+
+1. stabilization and smoke tests;
+2. multi-atlas export;
+3. rigging polish;
+4. remaining performance work;
+5. release engineering.
+
+---
 
 ## Tech
 
-- Vite
-- TypeScript
-- Canvas 2D
-- IndexedDB
-- gifenc
-- local ZIP writer
-- GitHub Pages
+- Vite.
+- TypeScript.
+- Canvas 2D.
+- IndexedDB.
+- Web Workers.
+- `gifenc` bundled locally for Pages.
+- Local ZIP writer.
+- GitHub Pages.
 
 ## License
 
