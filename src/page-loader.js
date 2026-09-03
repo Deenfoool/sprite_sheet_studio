@@ -9,6 +9,7 @@ const asepriteExportUrl = new URL('./aseprite-export.js', import.meta.url);
 const aiFixerUrl = new URL('./ai-fixer.js', import.meta.url);
 const uxToolsUrl = new URL('./ux-tools.js', import.meta.url);
 const performanceUrl = new URL('./performance.js', import.meta.url);
+const performanceGuardsUrl = new URL('./performance-guards.js', import.meta.url);
 const riggingUrl = new URL('./rigging.js', import.meta.url);
 const skeletalAnimationUrl = new URL('./skeletal-animation.js', import.meta.url);
 const meshUrl = new URL('./mesh.js', import.meta.url);
@@ -95,7 +96,7 @@ function exposeRigBridge(rigging) {
 
 async function boot() {
   const sourceUrl = new URL('./main-v2.ts', import.meta.url);
-  const [source, extension, engineExports, apngExport, asepriteExport, aiFixer, uxTools, performanceTools, rigging, skeletalAnimation, mesh, ik] = await Promise.all([
+  const [source, extension, engineExports, apngExport, asepriteExport, aiFixer, uxTools, performanceTools, performanceGuards, rigging, skeletalAnimation, mesh, ik] = await Promise.all([
     fetchText(sourceUrl, 'editor source'),
     fetchText(extensionUrl, 'project system'),
     fetchText(engineExportsUrl, 'engine exporters'),
@@ -104,13 +105,14 @@ async function boot() {
     fetchText(aiFixerUrl, 'AI sprite fixer'),
     fetchText(uxToolsUrl, 'professional editor tools'),
     fetchText(performanceUrl, 'performance tools'),
+    fetchText(performanceGuardsUrl, 'performance guards'),
     fetchText(riggingUrl, 'bone rigging workspace'),
     fetchText(skeletalAnimationUrl, 'skeletal animation editor'),
     fetchText(meshUrl, 'mesh deformation'),
     fetchText(ikUrl, 'inverse kinematics')
   ]);
 
-  const js = `${stripMainTypeScript(source)}\n\n${exposeProjectBridge(extension)}\n\n${engineExports}\n\n${apngExport}\n\n${asepriteExport}\n\n${aiFixer}\n\n${uxTools}\n\n${performanceTools}\n\n${exposeRigBridge(rigging)}\n\n${skeletalAnimation}\n\n${mesh}\n\n${ik}`;
+  const js = `${stripMainTypeScript(source)}\n\n${exposeProjectBridge(extension)}\n\n${engineExports}\n\n${apngExport}\n\n${asepriteExport}\n\n${aiFixer}\n\n${uxTools}\n\n${performanceTools}\n\n${performanceGuards}\n\n${exposeRigBridge(rigging)}\n\n${skeletalAnimation}\n\n${mesh}\n\n${ik}`;
 
   const blobUrl = URL.createObjectURL(new Blob([`${js}\n//# sourceURL=sprite-sheet-studio-runtime.js`], { type: 'text/javascript' }));
   try {
