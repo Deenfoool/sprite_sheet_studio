@@ -1,4 +1,7 @@
 const app = document.querySelector('#app');
+const gifModuleUrl = new URL('./vendor/gifenc.esm.js', import.meta.url).href;
+const zipModuleUrl = new URL('./zip-store.js', import.meta.url).href;
+const toolsModuleUrl = new URL('./sprite-tools.js', import.meta.url).href;
 
 function showFatal(error) {
   console.error('[Sprite Sheet Studio] startup failed', error);
@@ -18,37 +21,44 @@ function escapeHtml(value) {
   return value.replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char]);
 }
 
+function stripParamTypes(params) {
+  return params.split(',').map((part) => {
+    const raw = part.trim();
+    if (!raw) return raw;
+    const equalAt = raw.indexOf('=');
+    const left = equalAt >= 0 ? raw.slice(0, equalAt).trim() : raw;
+    const right = equalAt >= 0 ? raw.slice(equalAt) : '';
+    const colonAt = left.indexOf(':');
+    const cleanLeft = colonAt >= 0 ? left.slice(0, colonAt).trim().replace(/\?$/, '') : left;
+    return `${cleanLeft}${right ? ` ${right}` : ''}`;
+  }).join(', ');
+}
+
+function stripFunctionTypes(code) {
+  return code.replace(
+    /function\s+([A-Za-z_$][\w$]*)\s*(?:<[^>{}]*>)?\s*\(([^()]*)\)\s*(?::\s*(?:Promise<[^>]+>|[A-Za-z_$][\w$]*(?:\[\])?|\{[^{}]*\}))?\s*\{/g,
+    (_match, name, params) => `function ${name}(${stripParamTypes(params)}) {`
+  );
+}
+
 function stripMainTypeScript(source) {
   let code = source;
 
   code = code
     .replace(/^import\s+['"]\.\/styles\.css['"];?\s*$/m, '')
     .replace(/^import\s+['"]\.\/smart-tools\.css['"];?\s*$/m, '')
-    .replace(/import\s+\{\s*GIFEncoder\s*,\s*quantize\s*,\s*applyPalette\s*\}\s+from\s+['"]gifenc['"];?/, "import { GIFEncoder, quantize, applyPalette } from './vendor/gifenc.esm.js';")
-    .replace(/import\s+\{\s*zipSync\s*\}\s+from\s+['"]fflate['"];?/, "import { zipSync } from './zip-store.js';")
-    .replace(/import\s*\{[\s\S]*?\}\s*from\s*['"]\.\/sprite-tools['"];?/, "import { alignCanvases, cloneCanvas, get2d, opaqueBounds, suggestTransparentGrid, trimTransparent } from './sprite-tools.js';")
+    .replace(/import\s+\{\s*GIFEncoder\s*,\s*quantize\s*,\s*applyPalette\s*\}\s+from\s+['"]gifenc['"];?/, `import { GIFEncoder, quantize, applyPalette } from '${gifModuleUrl}';`)
+    .replace(/import\s+\{\s*zipSync\s*\}\s+from\s+['"]fflate['"];?/, `import { zipSync } from '${zipModuleUrl}';`)
+    .replace(/import\s*\{[\s\S]*?\}\s*from\s*['"]\.\/sprite-tools['"];?/, `import { alignCanvases, cloneCanvas, get2d, opaqueBounds, suggestTransparentGrid, trimTransparent } from '${toolsModuleUrl}';`)
     .replace(/type\s+SpriteFrame\s*=\s*\{[\s\S]*?const\s+state\s*:\s*AppState\s*=/, 'const state =')
-    .replace(/function\s+q<T\s+extends\s+Element>\(selector:\s*string\):\s*T/g, 'function q(selector)')
     .replace(/\bq<[^>]+>/g, 'q')
     .replace(/\.querySelector<[^>]+>/g, '.querySelector')
     .replace(/document\.querySelector<[^>]+>/g, 'document.querySelector')
-    .replace(/const\s+frames\s*:\s*SpriteFrame\[\]\s*=/g, 'const frames =')
-    .replace(/const\s+labels\s*:\s*Record<AnchorMode,\s*string>\s*=/g, 'const labels =')
-    .replace(/const\s+anchorLabels\s*:\s*Record<AnchorMode,\s*string>\s*=/g, 'const anchorLabels =')
-    .replace(/const\s+files\s*:\s*Record<string,\s*Uint8Array>\s*=/g, 'const files =')
-    .replace(/\(color:\s*number\[\]\)\s*=>/g, '(color) =>')
-    .replace(/\s+as\s+AnchorMode\b/g, '')
-    .replace(/\s+as\s+PreviewBackground\b/g, '')
-    .replace(/\s+as\s+HTMLElement\s*\|\s*null\b/g, '')
-    .replace(/function\s+transformCurrent\(kind:\s*'flip-x'\s*\|\s*'flip-y'\s*\|\s*'rotate'\)/g, 'function transformCurrent(kind)')
-    .replace(/:\s*\{\s*width:\s*number;\s*height:\s*number\s*\}\s*\{/g, ' {')
-    .replace(/\):\s*Promise<void>\s*\{/g, ') {')
-    .replace(/\):\s*HTMLCanvasElement\s*\{/g, ') {')
-    .replace(/\):\s*CanvasRenderingContext2D\s*\{/g, ') {')
-    .replace(/\):\s*string\s*\{/g, ') {')
-    .replace(/\):\s*number\s*\{/g, ') {')
-    .replace(/\):\s*void\s*\{/g, ') {')
-    .replace(/\b(fileList|value|selector|width|height|now|frame|busy|message|blob|filename|color)\s*:\s*(?:FileList\s*\|\s*File\[\]|string|number|boolean|HTMLCanvasElement|SpriteFrame|Blob|CanvasRenderingContext2D)(?=\s*[,)=])/g, '$1');
+    .replace(/\b(const|let|var)\s+([A-Za-z_$][\w$]*)\s*:\s*(?:Record<[^=;\n]+>|[A-Za-z_$][\w$]*(?:\[\])?)\s*=/g, '$1 $2 =')
+    .replace(/\(([A-Za-z_$][\w$]*)\s*:\s*[^)]+\)\s*=>/g, '($1) =>')
+    .replace(/\s+as\s+(?:AnchorMode|PreviewBackground|HTMLElement\s*\|\s*null)\b/g, '');
+
+  code = stripFunctionTypes(code);
 
   return code;
 }
@@ -59,7 +69,8 @@ async function boot() {
     return;
   }
 
-  const response = await fetch('./src/main-v2.ts', { cache: 'no-cache' });
+  const sourceUrl = new URL('./main-v2.ts', import.meta.url);
+  const response = await fetch(sourceUrl, { cache: 'no-cache' });
   if (!response.ok) throw new Error(`Could not load editor source: HTTP ${response.status}`);
   const source = await response.text();
   const js = stripMainTypeScript(source);
