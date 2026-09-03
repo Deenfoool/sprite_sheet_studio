@@ -1,0 +1,29 @@
+.ik-panel { border-top: 1px solid #203249; }
+.ik-status {
+  margin: 8px 0;
+  padding: 8px;
+  border: 1px solid #243a53;
+  border-radius: 7px;
+  background: #0a1522;
+  color: #7488a1;
+  font-size: 9px;
+  line-height: 1.45;
+}
+.ik-status.active { color: #8adfc8; border-color: #25634f; background: #0b201d; }
+.ik-target-readout { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.ik-direction { display: flex; gap: 5px; }
+.ik-direction .btn { flex: 1; }
+.ik-direction .btn.active { border-color: #1f8cd2; background: #103256; color: #8bd1ff; }
+.ik-constraints { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.ik-constraint-box { border: 1px solid #1e3046; border-radius: 7px; padding: 7px; background: #0a121e; }
+.ik-constraint-box b { display: block; color: #92a4bb; font-size: 9px; margin-bottom: 6px; }
+.ik-target-dot {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ffcf5b;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 10px rgba(255,207,91,.45);
+}
