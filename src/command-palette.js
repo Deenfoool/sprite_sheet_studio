@@ -68,6 +68,7 @@ function initCommandPalette() {
     const output = [];
     const buttons = [...document.querySelectorAll('button')].filter((button) => !button.closest('.sss-command-palette'));
     buttons.forEach((button, index) => {
+      if (button.offsetParent === null) return;
       const label = normalizeText(button.textContent || button.getAttribute('aria-label') || button.title);
       if (!label || label.length > 80) return;
       const id = commandId(button, index);
@@ -80,10 +81,9 @@ function initCommandPalette() {
         category: categoryFor(button),
         icon: iconFor(label),
         disabled: button.disabled,
-        hidden: button.offsetParent === null,
         run() {
           const liveButton = button.id ? document.getElementById(button.id) : button;
-          if (!(liveButton instanceof HTMLButtonElement) || liveButton.disabled) return false;
+          if (!(liveButton instanceof HTMLButtonElement) || liveButton.disabled || liveButton.offsetParent === null) return false;
           liveButton.click();
           return true;
         }
@@ -96,7 +96,6 @@ function initCommandPalette() {
       category: 'Developer',
       icon: 'stethoscope',
       disabled: false,
-      hidden: false,
       run() {
         globalThis.__SSSDiagnostics?.open?.();
         return Boolean(globalThis.__SSSDiagnostics);
