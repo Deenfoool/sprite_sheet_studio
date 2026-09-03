@@ -17,6 +17,34 @@
 .ik-constraints { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .ik-constraint-box { border: 1px solid #1e3046; border-radius: 7px; padding: 7px; background: #0a121e; }
 .ik-constraint-box b { display: block; color: #92a4bb; font-size: 9px; margin-bottom: 6px; }
+
+.ik-chain-manager {
+  margin: 7px 0;
+  padding: 8px;
+  border: 1px solid #20354d;
+  border-radius: 8px;
+  background: #08121e;
+}
+.ik-chain-manager .rig-field { margin: 0 0 6px; }
+.ik-chain-manager label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ik-chain-manager label small {
+  color: #58718e;
+  font-size: 8px;
+  font-weight: 700;
+}
+.ik-chain-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.ik-chain-actions .btn { width: 100%; }
+
+.rig-check.compact {
+  min-height: 24px;
+  font-size: 8px;
+}
+
 .ik-target-dot {
   position: absolute;
   width: 16px;
@@ -26,4 +54,8 @@
   pointer-events: none;
   transform: translate(-50%, -50%);
   box-shadow: 0 0 10px rgba(255,207,91,.45);
+}
+
+@media (max-width: 900px) {
+  .ik-constraints { grid-template-columns: 1fr; }
 }
