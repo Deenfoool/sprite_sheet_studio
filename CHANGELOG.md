@@ -11,16 +11,21 @@ The project follows semantic-versioning intent while it is pre-1.0: minor versio
 - Accessibility runtime with skip link, live region, focus-visible treatment and reduced-motion support.
 - Cross-browser Playwright projects for Chromium, Firefox and WebKit.
 - Browser support / capability documentation.
+- **Multiple simultaneous IK chains** with separate targets, enable states, bend settings, constraints and joint locks.
+- Multi-chain IK persistence in local rig extras and full `.sss` projects.
+- Smoke coverage for multi-chain IK and IK project persistence.
 
 ### Changed
 
 - Browser smoke tests now treat Animated WebP as a capability-dependent feature.
 - Runtime diagnostics include accessibility, easing-persistence and WebP capability checks.
+- Rigging roadmap now treats one global IK target as legacy behavior; the editor uses a chain manager instead.
 
 ### Pending
 
 - Replace the Pages runtime TypeScript stripping path with a verified committed production bundle.
 - Execute and record the full three-engine browser matrix for a release candidate.
+- Add dedicated IK pole targets and stretch/unreachable-target modes.
 - License decision before stable public release.
 
 ## [0.4.0-dev.1] - 2026-09-03
@@ -95,5 +100,5 @@ The project follows semantic-versioning intent while it is pre-1.0: minor versio
 
 - The published Pages fallback still performs local runtime transformation of `main-v2.ts`.
 - Track-oriented skeletal property lanes are not implemented yet.
-- Multiple simultaneous IK chains are not implemented yet.
+- Dedicated IK pole targets / stretch behavior are not implemented yet.
 - Mesh editing remains an MVP Canvas-oriented workflow.
