@@ -15,6 +15,7 @@ The project has moved far beyond the original GIF-converter MVP. It now combines
 - Multi-animation projects with autosave.
 - Game-engine-oriented export.
 - Bone rigging, skeletal animation, IK and basic mesh skinning.
+- Built-in runtime diagnostics for release smoke checks.
 
 ---
 
@@ -61,6 +62,7 @@ The project has moved far beyond the original GIF-converter MVP. It now combines
 - Resize canvas.
 - Nearest-neighbour ×2 / ×3 / ×4 scaling.
 - Checkerboard / white / black preview backgrounds.
+- **Custom preview background color** with a color picker.
 - Rulers and guides.
 - Snap to guides.
 - Fullscreen workspace.
@@ -90,6 +92,7 @@ Features:
 - Automatic restore of the last local project.
 - Export project as `.sss`.
 - Import `.sss`.
+- Custom frame anchors survive autosave and `.sss` round trips.
 - Keyboard shortcuts:
   - `Ctrl/Cmd + Z` — Undo;
   - `Ctrl/Cmd + Shift + Z` / `Ctrl/Cmd + Y` — Redo;
@@ -128,6 +131,7 @@ This is especially useful for sprite sheets produced by generative image models 
 ### Atlas / metadata
 
 - Atlas PNG + JSON ZIP.
+- **Paged Multi-atlas** for large projects, with one JSON manifest mapping every frame to its atlas page.
 - Engine-agnostic animation metadata JSON.
 - **Aseprite-compatible atlas JSON with `frameTags`**.
 
@@ -172,6 +176,7 @@ Open the **Rigging** workspace from the top bar.
 - Bind a sprite part to a bone.
 - Part pivot X / Y.
 - Offset and rotation.
+- **Scale X / Scale Y**.
 - Z-order.
 - Opacity.
 - Visibility.
@@ -183,7 +188,7 @@ Open the **Rigging** workspace from the top bar.
 
 - Multiple skeletal animation clips.
 - Bone position / rotation / length keyframes.
-- Sprite position / rotation / opacity / visibility keyframes.
+- Sprite position / rotation / **scale** / opacity / visibility keyframes.
 - Timeline scrubbing and playback.
 - Per-animation FPS and clip length.
 - Looping.
@@ -205,6 +210,7 @@ Open the **Rigging** workspace from the top bar.
 - Bend / pole direction.
 - Parent-joint min/max rotation constraints.
 - End-joint min/max rotation constraints.
+- **Independent rotation lock** for the parent or end joint.
 - IK result can be captured as a skeletal keyframe.
 
 ---
@@ -226,14 +232,41 @@ This is still an MVP and currently uses the browser-oriented rendering path. A m
 ## Performance
 
 - GIF quantization / encoding runs in a **Web Worker**.
-- GIF export progress indicator.
-- Raw GIF-memory limit guard.
-- Atlas dimension / pixel guard.
+- APNG compression / encoding runs in a **Web Worker** with a main-thread fallback.
+- GIF / APNG progress indicators.
+- Raw export-memory guards.
+- Single-atlas dimension / pixel guard.
+- **Paged Multi-atlas** instead of forcing huge projects into one unsafe browser canvas.
 - Timeline thumbnail backing canvases are compacted instead of retaining full-size frame canvases.
 - Playback pauses when the browser tab is hidden.
 - Generated Object URLs are cleaned up.
 
-Large atlas projects are currently rejected when they exceed a safe browser canvas budget; paged/multi-atlas export is planned.
+---
+
+## Diagnostics / smoke checks
+
+The top bar contains a **Diagnostics** button. It checks the major runtime dependencies used by the branch-deployed site:
+
+- Canvas 2D;
+- `createImageBitmap`;
+- IndexedDB;
+- Web Workers;
+- `CompressionStream` for APNG;
+- Project / Rig / IK runtime bridges;
+- local ZIP writer;
+- local GIF encoder;
+- GIF and APNG worker assets;
+- Pages loader and important export modules.
+
+A JSON report can be exported from the diagnostics dialog.
+
+For a quick Pages smoke check, open the site with:
+
+```text
+?selftest=1
+```
+
+The diagnostics panel will open automatically after the editor starts.
 
 ---
 
@@ -292,11 +325,11 @@ See [ROADMAP.md](./ROADMAP.md) for the live `DONE / PARTIAL / TODO` status of ev
 
 Current focus:
 
-1. stabilization and smoke tests;
-2. multi-atlas export;
-3. rigging polish;
+1. release stabilization and browser smoke testing;
+2. removing runtime TypeScript stripping from the Pages path;
+3. rigging / mesh polish;
 4. remaining performance work;
-5. release engineering.
+5. release engineering and versioning.
 
 ---
 
