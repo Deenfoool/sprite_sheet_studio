@@ -17,6 +17,7 @@
       length: 24,
       loop: true,
       interpolation: 'linear',
+      curve: [0.42, 0, 0.58, 1],
       keyframes: new Map()
     };
   }
@@ -85,9 +86,44 @@
     return a + delta * t;
   }
 
-  function easedT(t, mode) {
+  function bezierCoordinate(t, p1, p2) {
+    const oneMinusT = 1 - t;
+    return 3 * oneMinusT * oneMinusT * t * p1 + 3 * oneMinusT * t * t * p2 + t * t * t;
+  }
+
+  function bezierDerivative(t, p1, p2) {
+    const oneMinusT = 1 - t;
+    return 3 * oneMinusT * oneMinusT * p1 + 6 * oneMinusT * t * (p2 - p1) + 3 * t * t * (1 - p2);
+  }
+
+  function cubicBezierAt(x, curve) {
+    const [x1, y1, x2, y2] = Array.isArray(curve) && curve.length === 4 ? curve : [0.42, 0, 0.58, 1];
+    const target = Math.max(0, Math.min(1, x));
+    let t = target;
+    for (let iteration = 0; iteration < 6; iteration += 1) {
+      const currentX = bezierCoordinate(t, x1, x2) - target;
+      const derivative = bezierDerivative(t, x1, x2);
+      if (Math.abs(currentX) < 0.0001 || Math.abs(derivative) < 0.00001) break;
+      t = Math.max(0, Math.min(1, t - currentX / derivative));
+    }
+    let low = 0;
+    let high = 1;
+    for (let iteration = 0; iteration < 8; iteration += 1) {
+      const currentX = bezierCoordinate(t, x1, x2);
+      if (Math.abs(currentX - target) < 0.0001) break;
+      if (currentX < target) low = t;
+      else high = t;
+      t = (low + high) / 2;
+    }
+    return Math.max(0, Math.min(1, bezierCoordinate(t, y1, y2)));
+  }
+
+  function easedT(t, mode, curve) {
     if (mode === 'step') return 0;
     if (mode === 'ease') return t * t * (3 - 2 * t);
+    if (mode === 'ease-in') return t * t;
+    if (mode === 'ease-out') return 1 - (1 - t) * (1 - t);
+    if (mode === 'bezier') return cubicBezierAt(t, curve);
     return t;
   }
 
@@ -104,10 +140,10 @@
     return out;
   }
 
-  function interpolatePose(a, b, rawT, mode) {
+  function interpolatePose(a, b, rawT, mode, curve) {
     if (!a) return clonePose(b);
     if (!b) return clonePose(a);
-    const t = easedT(rawT, mode);
+    const t = easedT(rawT, mode, curve);
     if (mode === 'step') return clonePose(a);
     const pose = { bones: {}, parts: {} };
     const boneIds = new Set([...Object.keys(a.bones || {}), ...Object.keys(b.bones || {})]);
@@ -133,7 +169,7 @@
     }
     if (previous === next) return clonePose(anim.keyframes.get(previous));
     const t = (frame - previous) / Math.max(1, next - previous);
-    return interpolatePose(anim.keyframes.get(previous), anim.keyframes.get(next), t, anim.interpolation);
+    return interpolatePose(anim.keyframes.get(previous), anim.keyframes.get(next), t, anim.interpolation, anim.curve);
   }
 
   function setCurrentFrame(frame, refreshInspector = false) {
@@ -177,6 +213,50 @@
     });
   }
 
+  function syncCurveUi() {
+    const anim = animation();
+    if (!anim || !curvePanel) return;
+    const curve = Array.isArray(anim.curve) && anim.curve.length === 4 ? anim.curve : [0.42, 0, 0.58, 1];
+    curvePanel.hidden = anim.interpolation !== 'bezier';
+    [curveX1, curveY1, curveX2, curveY2].forEach((input, index) => {
+      input.value = String(Math.round(curve[index] * 100) / 100);
+    });
+    curveCode.textContent = `cubic-bezier(${curve.map((value) => Math.round(value * 100) / 100).join(', ')})`;
+    drawCurvePreview();
+  }
+
+  function drawCurvePreview() {
+    const anim = animation();
+    if (!anim || !(curveCanvas instanceof HTMLCanvasElement)) return;
+    const ctx = curveCanvas.getContext('2d');
+    if (!ctx) return;
+    const width = curveCanvas.width;
+    const height = curveCanvas.height;
+    ctx.clearRect(0, 0, width, height);
+    ctx.strokeStyle = '#263750';
+    ctx.lineWidth = 1;
+    for (let i = 1; i < 4; i += 1) {
+      ctx.beginPath();
+      ctx.moveTo((width * i) / 4, 0);
+      ctx.lineTo((width * i) / 4, height);
+      ctx.moveTo(0, (height * i) / 4);
+      ctx.lineTo(width, (height * i) / 4);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = '#67c8ff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let step = 0; step <= 64; step += 1) {
+      const x = step / 64;
+      const y = cubicBezierAt(x, anim.curve);
+      const px = x * width;
+      const py = height - y * height;
+      if (!step) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+
   function renderAnimationSelect() {
     animSelect.innerHTML = '';
     library.forEach((anim, name) => {
@@ -192,6 +272,7 @@
     loopInput.checked = anim.loop;
     interpSelect.value = anim.interpolation;
     timelineRange.max = String(anim.length);
+    syncCurveUi();
     setCurrentFrame(Math.min(currentFrame, anim.length), true);
   }
 
@@ -224,6 +305,7 @@
       length: source.length,
       loop: source.loop,
       interpolation: source.interpolation,
+      curve: [...(source.curve || [0.42, 0, 0.58, 1])],
       keyframes: new Map([...source.keyframes.entries()].map(([frame, pose]) => [frame, clonePose(pose)]))
     };
     library.set(name, copy);
@@ -260,6 +342,7 @@
       length: source.length,
       loop: source.loop,
       interpolation: source.interpolation,
+      curve: [...(source.curve || [0.42, 0, 0.58, 1])],
       keyframes: new Map([...source.keyframes.entries()].map(([frame, pose]) => [frame, mirrorPose(pose)]))
     });
     activeName = name;
@@ -291,6 +374,7 @@
         length: anim.length,
         loop: anim.loop,
         interpolation: anim.interpolation,
+        curve: anim.curve,
         keyframes: Object.fromEntries([...anim.keyframes.entries()].map(([frame, pose]) => [frame, pose]))
       }]))
     };
@@ -361,10 +445,27 @@
     </div>
     <div class="skeletal-footer">
       <div class="skeletal-interp">Interpolation
-        <select id="skInterp"><option value="step">Step</option><option value="linear" selected>Linear</option><option value="ease">Ease in/out</option></select>
+        <select id="skInterp">
+          <option value="step">Step</option>
+          <option value="linear" selected>Linear</option>
+          <option value="ease">Smooth ease</option>
+          <option value="ease-in">Ease in</option>
+          <option value="ease-out">Ease out</option>
+          <option value="bezier">Cubic Bezier…</option>
+        </select>
       </div>
       <div class="skeletal-interp">Length <input class="control" id="skLength" type="number" min="1" max="600" value="24" style="width:62px;height:25px" /> frames</div>
       <label class="skeletal-interp">Loop <input id="skLoop" type="checkbox" checked /></label>
+    </div>
+    <div class="skeletal-curve-panel" id="skCurvePanel" hidden>
+      <canvas id="skCurveCanvas" width="180" height="72"></canvas>
+      <div class="skeletal-curve-fields">
+        <label>x1 <input id="skCurveX1" type="number" min="0" max="1" step="0.01" value="0.42" /></label>
+        <label>y1 <input id="skCurveY1" type="number" min="-2" max="3" step="0.01" value="0" /></label>
+        <label>x2 <input id="skCurveX2" type="number" min="0" max="1" step="0.01" value="0.58" /></label>
+        <label>y2 <input id="skCurveY2" type="number" min="-2" max="3" step="0.01" value="1" /></label>
+        <code id="skCurveCode">cubic-bezier(0.42, 0, 0.58, 1)</code>
+      </div>
     </div>`;
   stage.append(timeline);
 
@@ -385,6 +486,13 @@
   const duplicateBtn = document.querySelector('#skDuplicate');
   const mirrorBtn = document.querySelector('#skMirror');
   const exportBtn = document.querySelector('#skExport');
+  const curvePanel = document.querySelector('#skCurvePanel');
+  const curveCanvas = document.querySelector('#skCurveCanvas');
+  const curveX1 = document.querySelector('#skCurveX1');
+  const curveY1 = document.querySelector('#skCurveY1');
+  const curveX2 = document.querySelector('#skCurveX2');
+  const curveY2 = document.querySelector('#skCurveY2');
+  const curveCode = document.querySelector('#skCurveCode');
 
   animSelect.addEventListener('change', () => {
     activeName = animSelect.value;
@@ -397,7 +505,11 @@
   keyBtn.addEventListener('click', setKeyframe);
   playBtn.addEventListener('click', togglePlayback);
   timelineRange.addEventListener('input', () => { playing = false; playBtn.textContent = '▶'; setCurrentFrame(Number(timelineRange.value), true); });
-  interpSelect.addEventListener('change', () => { animation().interpolation = interpSelect.value; setCurrentFrame(currentFrame, true); });
+  interpSelect.addEventListener('change', () => {
+    animation().interpolation = interpSelect.value;
+    syncCurveUi();
+    setCurrentFrame(currentFrame, true);
+  });
   lengthInput.addEventListener('change', () => {
     animation().length = Math.max(1, Math.min(600, Number(lengthInput.value) || 24));
     lengthInput.value = String(animation().length);
@@ -411,6 +523,20 @@
   duplicateBtn.addEventListener('click', duplicateAnimation);
   mirrorBtn.addEventListener('click', mirrorAnimation);
   exportBtn.addEventListener('click', exportAnimations);
+
+  function updateCurve() {
+    const anim = animation();
+    if (!anim) return;
+    const values = [curveX1, curveY1, curveX2, curveY2].map((input, index) => {
+      const value = Number(input.value);
+      if (!Number.isFinite(value)) return [0.42, 0, 0.58, 1][index];
+      return index === 0 || index === 2 ? Math.max(0, Math.min(1, value)) : Math.max(-2, Math.min(3, value));
+    });
+    anim.curve = values;
+    syncCurveUi();
+    setCurrentFrame(currentFrame, true);
+  }
+  [curveX1, curveY1, curveX2, curveY2].forEach((input) => input.addEventListener('change', updateCurve));
 
   renderAnimationSelect();
 })();
