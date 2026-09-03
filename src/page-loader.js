@@ -5,6 +5,7 @@ const toolsModuleUrl = new URL('./sprite-tools.js', import.meta.url).href;
 const extensionUrl = new URL('./editor-extensions.js', import.meta.url);
 const engineExportsUrl = new URL('./engine-exports.js', import.meta.url);
 const riggingUrl = new URL('./rigging.js', import.meta.url);
+const skeletalAnimationUrl = new URL('./skeletal-animation.js', import.meta.url);
 
 function showFatal(error) {
   console.error('[Sprite Sheet Studio] startup failed', error);
@@ -78,6 +79,13 @@ function exposeProjectBridge(extension) {
   return extension.replace(marker, bridge);
 }
 
+function exposeRigBridge(rigging) {
+  const marker = '  resetRig();\n})();';
+  if (!rigging.includes(marker)) throw new Error('Rigging runtime marker was not found.');
+  const bridge = `  globalThis.__SSSRig = {\n    state: rig,\n    draw: () => drawRig(),\n    render: () => renderRigUi(),\n    boneById: (id) => boneById(id),\n    partById: (id) => partById(id)\n  };\n\n  resetRig();\n})();`;
+  return rigging.replace(marker, bridge);
+}
+
 async function boot() {
   if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
     await import('/src/main-v2.ts');
@@ -85,13 +93,14 @@ async function boot() {
   }
 
   const sourceUrl = new URL('./main-v2.ts', import.meta.url);
-  const [source, extension, engineExports, rigging] = await Promise.all([
+  const [source, extension, engineExports, rigging, skeletalAnimation] = await Promise.all([
     fetchText(sourceUrl, 'editor source'),
     fetchText(extensionUrl, 'project system'),
     fetchText(engineExportsUrl, 'engine exporters'),
-    fetchText(riggingUrl, 'bone rigging workspace')
+    fetchText(riggingUrl, 'bone rigging workspace'),
+    fetchText(skeletalAnimationUrl, 'skeletal animation editor')
   ]);
-  const js = `${stripMainTypeScript(source)}\n\n${exposeProjectBridge(extension)}\n\n${engineExports}\n\n${rigging}`;
+  const js = `${stripMainTypeScript(source)}\n\n${exposeProjectBridge(extension)}\n\n${engineExports}\n\n${exposeRigBridge(rigging)}\n\n${skeletalAnimation}`;
 
   const blobUrl = URL.createObjectURL(new Blob([`${js}\n//# sourceURL=sprite-sheet-studio-runtime.js`], { type: 'text/javascript' }));
   try {
