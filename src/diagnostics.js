@@ -1,87 +1,109 @@
-(() => {
-  const checks = [];
+import { GIFEncoder } from './vendor/gifenc.esm.js';
+import { zipSync } from './zip-store.js';
 
-  function result(name, ok, detail = '') {
-    checks.push({ name, ok: Boolean(ok), detail: String(detail || '') });
+const checks = [];
+let initialized = false;
+
+function result(name, ok, detail = '') {
+  checks.push({ name, ok: Boolean(ok), detail: String(detail || '') });
+}
+
+async function checkFetch(path, name) {
+  try {
+    const response = await fetch(new URL(path, document.baseURI), { cache: 'no-cache' });
+    result(name, response.ok, `HTTP ${response.status}`);
+  } catch (error) {
+    result(name, false, error instanceof Error ? error.message : String(error));
+  }
+}
+
+async function runDiagnostics() {
+  checks.length = 0;
+
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = 2;
+    canvas.height = 2;
+    const ctx = canvas.getContext('2d');
+    ctx?.fillRect(0, 0, 1, 1);
+    result('Canvas 2D', Boolean(ctx), ctx ? '2D context available' : 'No 2D context');
+  } catch (error) {
+    result('Canvas 2D', false, error instanceof Error ? error.message : String(error));
   }
 
-  async function checkFetch(path, name) {
-    try {
-      const response = await fetch(new URL(path, document.baseURI), { cache: 'no-cache' });
-      result(name, response.ok, response.ok ? `HTTP ${response.status}` : `HTTP ${response.status}`);
-    } catch (error) {
-      result(name, false, error instanceof Error ? error.message : String(error));
-    }
+  result('createImageBitmap', typeof createImageBitmap === 'function', typeof createImageBitmap);
+  result('IndexedDB', typeof indexedDB !== 'undefined', typeof indexedDB);
+  result('Web Worker', typeof Worker === 'function', typeof Worker);
+  result('CompressionStream', typeof CompressionStream === 'function', typeof CompressionStream);
+  result('Project System', Boolean(globalThis.__SSSProject), globalThis.__SSSProject ? 'bridge ready' : 'bridge missing');
+  result('Rigging', Boolean(globalThis.__SSSRig), globalThis.__SSSRig ? 'bridge ready' : 'bridge missing');
+  result('IK', Boolean(globalThis.__SSSIK), globalThis.__SSSIK ? 'solver ready' : 'solver missing');
+
+  try {
+    const bytes = zipSync({ 'test.txt': new TextEncoder().encode('ok') }, { level: 0 });
+    const ok = bytes.length > 22 && bytes[0] === 0x50 && bytes[1] === 0x4b;
+    result('ZIP writer', ok, `${bytes.length} bytes`);
+  } catch (error) {
+    result('ZIP writer', false, error instanceof Error ? error.message : String(error));
   }
 
-  async function runDiagnostics() {
-    checks.length = 0;
-
-    try {
-      const canvas = document.createElement('canvas');
-      canvas.width = 2;
-      canvas.height = 2;
-      const ctx = canvas.getContext('2d');
-      ctx?.fillRect(0, 0, 1, 1);
-      result('Canvas 2D', Boolean(ctx), ctx ? '2D context available' : 'No 2D context');
-    } catch (error) {
-      result('Canvas 2D', false, error instanceof Error ? error.message : String(error));
-    }
-
-    result('createImageBitmap', typeof createImageBitmap === 'function', typeof createImageBitmap);
-    result('IndexedDB', typeof indexedDB !== 'undefined', typeof indexedDB);
-    result('Web Worker', typeof Worker === 'function', typeof Worker);
-    result('CompressionStream', typeof CompressionStream === 'function', typeof CompressionStream);
-    result('Project System', Boolean(globalThis.__SSSProject), globalThis.__SSSProject ? 'bridge ready' : 'bridge missing');
-    result('Rigging', Boolean(globalThis.__SSSRig), globalThis.__SSSRig ? 'bridge ready' : 'bridge missing');
-    result('IK', Boolean(globalThis.__SSSIK), globalThis.__SSSIK ? 'solver ready' : 'solver missing');
-
-    try {
-      const bytes = zipSync({ 'test.txt': new TextEncoder().encode('ok') }, { level: 0 });
-      const ok = bytes.length > 22 && bytes[0] === 0x50 && bytes[1] === 0x4b;
-      result('ZIP writer', ok, `${bytes.length} bytes`);
-    } catch (error) {
-      result('ZIP writer', false, error instanceof Error ? error.message : String(error));
-    }
-
-    try {
-      const gif = GIFEncoder();
-      gif.writeFrame(new Uint8Array([0]), 1, 1, { palette: [[0, 0, 0], [255, 255, 255]], delay: 20, repeat: 0 });
-      gif.finish();
-      const bytes = gif.bytes();
-      const header = new TextDecoder().decode(bytes.slice(0, 6));
-      result('GIF encoder', header === 'GIF89a' || header === 'GIF87a', `${header} · ${bytes.length} bytes`);
-    } catch (error) {
-      result('GIF encoder', false, error instanceof Error ? error.message : String(error));
-    }
-
-    await Promise.all([
-      checkFetch('./src/gif-worker.js', 'GIF worker asset'),
-      checkFetch('./src/apng-worker.js', 'APNG worker asset'),
-      checkFetch('./src/vendor/gifenc.esm.js', 'Local GIF module'),
-      checkFetch('./src/zip-store.js', 'Local ZIP module'),
-      checkFetch('./src/page-loader.js', 'Pages loader'),
-      checkFetch('./src/multi-atlas.js', 'Multi-atlas module'),
-      checkFetch('./src/aseprite-export.js', 'Aseprite exporter')
-    ]);
-
-    return {
-      app: 'Sprite Sheet Studio',
-      timestamp: new Date().toISOString(),
-      url: location.href,
-      userAgent: navigator.userAgent,
-      secureContext: globalThis.isSecureContext,
-      passed: checks.filter((item) => item.ok).length,
-      failed: checks.filter((item) => !item.ok).length,
-      checks: checks.map((item) => ({ ...item }))
-    };
+  try {
+    const gif = GIFEncoder();
+    gif.writeFrame(new Uint8Array([0]), 1, 1, { palette: [[0, 0, 0], [255, 255, 255]], delay: 20, repeat: 0 });
+    gif.finish();
+    const bytes = gif.bytes();
+    const header = new TextDecoder().decode(bytes.slice(0, 6));
+    result('GIF encoder', header === 'GIF89a' || header === 'GIF87a', `${header} · ${bytes.length} bytes`);
+  } catch (error) {
+    result('GIF encoder', false, error instanceof Error ? error.message : String(error));
   }
+
+  await Promise.all([
+    checkFetch('./src/gif-worker.js', 'GIF worker asset'),
+    checkFetch('./src/apng-worker.js', 'APNG worker asset'),
+    checkFetch('./src/vendor/gifenc.esm.js', 'Local GIF module'),
+    checkFetch('./src/zip-store.js', 'Local ZIP module'),
+    checkFetch('./src/page-loader.js', 'Pages loader'),
+    checkFetch('./src/multi-atlas.js', 'Multi-atlas module'),
+    checkFetch('./src/aseprite-export.js', 'Aseprite exporter'),
+    checkFetch('./src/custom-anchor.js', 'Custom anchor module')
+  ]);
+
+  return {
+    app: 'Sprite Sheet Studio',
+    timestamp: new Date().toISOString(),
+    url: location.href,
+    userAgent: navigator.userAgent,
+    secureContext: globalThis.isSecureContext,
+    passed: checks.filter((item) => item.ok).length,
+    failed: checks.filter((item) => !item.ok).length,
+    checks: checks.map((item) => ({ ...item }))
+  };
+}
+
+function downloadReport(report) {
+  const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = 'sprite-sheet-studio-diagnostics.json';
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+function init() {
+  if (initialized) return true;
+  const topActions = document.querySelector('.top-actions');
+  if (!topActions) return false;
+  initialized = true;
 
   const button = document.createElement('button');
   button.className = 'btn';
   button.textContent = 'Diagnostics';
   button.title = 'Run browser smoke checks';
-  document.querySelector('.top-actions')?.append(button);
+  topActions.append(button);
 
   const modal = document.createElement('div');
   modal.className = 'sss-diagnostics hidden';
@@ -114,8 +136,11 @@
       const icon = document.createElement('span');
       icon.textContent = item.ok ? '✓' : '×';
       const main = document.createElement('span');
-      main.innerHTML = `<b>${item.name}</b><small></small>`;
-      main.querySelector('small').textContent = item.detail;
+      const title = document.createElement('b');
+      title.textContent = item.name;
+      const detail = document.createElement('small');
+      detail.textContent = item.detail;
+      main.append(title, detail);
       row.append(icon, main);
       list.append(row);
     });
@@ -133,17 +158,19 @@
   button.addEventListener('click', () => void openAndRun());
   modal.querySelector('[data-diag-close]').addEventListener('click', () => modal.classList.add('hidden'));
   modal.querySelector('[data-diag-rerun]').addEventListener('click', () => void openAndRun());
-  modal.querySelector('[data-diag-export]').addEventListener('click', () => {
-    if (!lastReport) return;
-    downloadBlob(new Blob([JSON.stringify(lastReport, null, 2)], { type: 'application/json' }), 'sprite-sheet-studio-diagnostics.json');
-  });
-  modal.addEventListener('click', (event) => {
-    if (event.target === modal) modal.classList.add('hidden');
-  });
+  modal.querySelector('[data-diag-export]').addEventListener('click', () => { if (lastReport) downloadReport(lastReport); });
+  modal.addEventListener('click', (event) => { if (event.target === modal) modal.classList.add('hidden'); });
 
   globalThis.__SSSDiagnostics = { run: runDiagnostics, open: openAndRun };
 
-  if (new URLSearchParams(location.search).get('selftest') === '1') {
-    setTimeout(() => void openAndRun(), 150);
-  }
-})();
+  if (new URLSearchParams(location.search).get('selftest') === '1') setTimeout(() => void openAndRun(), 150);
+  return true;
+}
+
+if (!init()) {
+  const observer = new MutationObserver(() => {
+    if (!init()) return;
+    observer.disconnect();
+  });
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+}
