@@ -19,6 +19,15 @@ async function loadFourFrameFixture(page) {
   await expect(page.locator('#rowsInput')).toHaveValue('1');
 }
 
+async function canvasSupportsWebp(page) {
+  return page.evaluate(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 2;
+    canvas.height = 2;
+    return canvas.toDataURL('image/webp').startsWith('data:image/webp');
+  });
+}
+
 test('boots the complete editor runtime without page errors', async ({ page }) => {
   const pageErrors: string[] = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
@@ -40,6 +49,8 @@ test('boots the complete editor runtime without page errors', async ({ page }) =
   await expect(page.getByRole('button', { name: /Animated PNG/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /Animated WebP/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /Unity package/i })).toBeVisible();
+  await expect(page.locator('.sss-skip-link')).toBeAttached();
+  await expect(page.locator('#sss-live-region')).toBeAttached();
 
   expect(pageErrors).toEqual([]);
 });
@@ -97,7 +108,7 @@ test('cleanup compare and multi-frame onion controls are mounted', async ({ page
   await expect(page.locator('.cleanup-compare')).toHaveClass(/hidden/);
 });
 
-test('demo animation plays and exports through workers and WebP muxer', async ({ page }) => {
+test('demo animation plays and exports GIF and APNG', async ({ page }) => {
   const pageErrors: string[] = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
 
@@ -125,10 +136,20 @@ test('demo animation plays and exports through workers and WebP muxer', async ({
   const apng = await apngDownload;
   expect(apng.suggestedFilename()).toMatch(/\.png$/i);
 
-  const webpDownloadPromise = page.waitForEvent('download');
+  expect(pageErrors).toEqual([]);
+});
+
+test('Animated WebP muxer produces RIFF animation when Canvas WebP encoding is supported', async ({ page }) => {
+  await page.goto('/');
+  const supportsWebp = await canvasSupportsWebp(page);
+  test.skip(!supportsWebp, 'Canvas WebP encoding is not available in this browser engine');
+
+  await page.getByRole('button', { name: 'Try demo' }).click();
+  const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: /Animated WebP/i }).click();
-  const webp = await webpDownloadPromise;
+  const webp = await downloadPromise;
   expect(webp.suggestedFilename()).toMatch(/\.webp$/i);
+
   const webpPath = await webp.path();
   expect(webpPath).not.toBeNull();
   if (webpPath) {
@@ -138,23 +159,30 @@ test('demo animation plays and exports through workers and WebP muxer', async ({
     expect(bytes.includes(Buffer.from('ANIM'))).toBe(true);
     expect(bytes.includes(Buffer.from('ANMF'))).toBe(true);
   }
-
-  expect(pageErrors).toEqual([]);
 });
 
-test('custom anchors are persisted in a full SSS project', async ({ page }) => {
+test('custom anchors and skeletal easing persist in a full SSS project', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Try demo' }).click();
 
   await page.locator('#anchorSelect').selectOption('custom');
   await expect(page.getByRole('button', { name: /Pick anchor on preview/i })).toBeVisible();
-
   await page.getByRole('button', { name: /Pick anchor on preview/i }).click();
+
   const preview = page.locator('#previewCanvas');
   const box = await preview.boundingBox();
   expect(box).not.toBeNull();
   if (box) await page.mouse.click(box.x + box.width / 2, box.y + box.height * 0.8);
   await expect(page.locator('#customAnchorHint')).toContainText('anchor');
+
+  await page.getByRole('button', { name: /Rigging/i }).click();
+  await page.locator('#skInterp').selectOption('bezier');
+  await page.locator('#skCurveX1').fill('0.2');
+  await page.locator('#skCurveY1').fill('0.1');
+  await page.locator('#skCurveX2').fill('0.7');
+  await page.locator('#skCurveY2').fill('0.9');
+  await page.locator('#skCurveY2').blur();
+  await page.getByRole('button', { name: /Back to animator/i }).click();
 
   const projectDownload = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save .sss' }).click();
@@ -169,6 +197,8 @@ test('custom anchors are persisted in a full SSS project', async ({ page }) => {
     expect(saved.rigging).toBeTruthy();
     expect(saved.skeletal).toBeTruthy();
     expect(saved.animations.idle.frames[0].customAnchor).toBeTruthy();
+    expect(saved.skeletal.easingExtensions?.idle?.interpolation).toBe('bezier');
+    expect(saved.skeletal.easingExtensions?.idle?.curve).toEqual([0.2, 0.1, 0.7, 0.9]);
   }
 });
 
@@ -184,9 +214,28 @@ test('rigging, IK locks and skeletal scale controls are mounted', async ({ page 
   await expect(page.locator('#rigPartScaleX')).toBeAttached();
   await expect(page.locator('#rigPartScaleY')).toBeAttached();
   await expect(page.locator('#skAnimSelect')).toBeVisible();
+  await expect(page.locator('#skCurvePreview')).toBeVisible();
 
   await page.getByRole('button', { name: /Back to animator/i }).click();
   await expect(page.locator('.rig-overlay')).toHaveClass(/hidden/);
+});
+
+test('accessibility runtime exposes skip link, live region and reduced-motion state', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+
+  const skip = page.locator('.sss-skip-link');
+  await expect(skip).toHaveAttribute('href', '#sss-main-workspace');
+  await skip.focus();
+  await expect(skip).toBeFocused();
+
+  await expect(page.locator('#previewCanvas')).toHaveAttribute('role', 'img');
+  await expect(page.locator('#sourceCanvas')).toHaveAttribute('role', 'img');
+  await expect(page.locator('#sss-live-region')).toHaveAttribute('aria-live', 'polite');
+  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.reducedMotion)).toBe('true');
+
+  await page.getByRole('button', { name: 'Try demo' }).click();
+  await expect(page.locator('#sss-live-region')).not.toHaveText('');
 });
 
 test('built-in diagnostics complete and can export a report', async ({ page }) => {
@@ -196,7 +245,7 @@ test('built-in diagnostics complete and can export a report', async ({ page }) =
   const summary = page.locator('[data-diag-summary]');
   await expect(summary).toContainText('passed');
   const diagnosticsCount = await page.locator('.sss-diagnostics-row').count();
-  expect(diagnosticsCount).toBeGreaterThanOrEqual(26);
+  expect(diagnosticsCount).toBeGreaterThanOrEqual(32);
 
   const reportDownload = page.waitForEvent('download');
   await page.getByRole('button', { name: /Export report JSON/i }).click();
