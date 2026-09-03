@@ -49,7 +49,62 @@
 .skeletal-interp { display: flex; align-items: center; gap: 6px; }
 .skeletal-interp select { height: 25px; border-radius: 6px; border: 1px solid #273b53; background: #0a1320; color: #aebed2; font-size: 9px; }
 
+.skeletal-curve-panel {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  margin-top: 9px;
+  padding-top: 9px;
+  border-top: 1px solid #21334a;
+}
+.skeletal-curve-panel[hidden] { display: none; }
+#skCurveCanvas {
+  width: 180px;
+  height: 72px;
+  border: 1px solid #263a53;
+  border-radius: 7px;
+  background: #09111c;
+}
+.skeletal-curve-fields {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(54px, 1fr));
+  gap: 6px;
+  align-items: end;
+}
+.skeletal-curve-fields label {
+  display: grid;
+  gap: 3px;
+  color: #7890ad;
+  font-size: 9px;
+}
+.skeletal-curve-fields input {
+  width: 100%;
+  min-width: 0;
+  height: 27px;
+  padding: 0 6px;
+  border: 1px solid #263b54;
+  border-radius: 6px;
+  background: #0a1320;
+  color: #c7d5e6;
+  font: 10px ui-monospace, monospace;
+}
+#skCurveCode {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  padding: 5px 7px;
+  border-radius: 6px;
+  background: #080f19;
+  color: #68c9ff;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (max-width: 720px) {
   .skeletal-timeline { position: sticky; left: auto; right: auto; bottom: 0; margin-top: 10px; }
   .skeletal-toolbar .skeletal-fps { display: none; }
+  .skeletal-curve-panel { grid-template-columns: 1fr; }
+  #skCurveCanvas { width: 100%; }
+  .skeletal-curve-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
