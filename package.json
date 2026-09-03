@@ -13,8 +13,11 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "npm run build:runtime && npm run typecheck && npm run lint && npm run format:check",
-    "test:install": "playwright install chromium",
+    "test:install": "playwright install chromium firefox webkit",
     "test:smoke": "playwright test",
+    "test:smoke:chromium": "playwright test --project=chromium",
+    "test:smoke:firefox": "playwright test --project=firefox",
+    "test:smoke:webkit": "playwright test --project=webkit",
     "test:smoke:headed": "playwright test --headed"
   },
   "dependencies": {
