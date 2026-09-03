@@ -1,0 +1,177 @@
+.skeletal-tracks-shell {
+  border-top: 1px solid #1d2c40;
+  background: #08111c;
+}
+.skeletal-tracks-toolbar {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 8px;
+  border-bottom: 1px solid #17253a;
+}
+.skeletal-tracks-toolbar select {
+  height: 26px;
+  border: 1px solid #243850;
+  border-radius: 6px;
+  background: #0a1420;
+  color: #c7d3e2;
+  padding: 0 6px;
+  font-size: 9px;
+}
+.skeletal-track-density {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #71849d;
+  font-size: 9px;
+}
+.skeletal-track-density input { width: 88px; }
+.skeletal-track-summary {
+  margin-left: auto;
+  color: #6f829c;
+  font-size: 9px;
+}
+.skeletal-tracks-body {
+  max-height: 280px;
+  display: grid;
+  grid-template-columns: 142px minmax(0,1fr);
+  overflow: hidden;
+}
+.skeletal-tracks-labels {
+  padding-top: 25px;
+  overflow: hidden auto;
+  border-right: 1px solid #1b2b40;
+  background: #0a1320;
+}
+.skeletal-tracks-scroll {
+  position: relative;
+  overflow: auto;
+  min-width: 0;
+}
+.skeletal-tracks-ruler {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  height: 25px;
+  min-width: 100%;
+  background: #0b1624;
+  border-bottom: 1px solid #1c2b3f;
+}
+.skeletal-ruler-tick {
+  position: absolute;
+  top: 0;
+  height: 25px;
+  min-width: 26px;
+  padding: 0 3px;
+  transform: translateX(-50%);
+  border: 0;
+  background: transparent;
+  color: #5f738e;
+  font-size: 8px;
+  cursor: pointer;
+}
+.skeletal-ruler-tick::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 1px;
+  height: 5px;
+  background: #35506d;
+}
+.skeletal-track-label,
+.skeletal-track-row {
+  height: 24px;
+  border-bottom: 1px solid #142236;
+}
+.skeletal-track-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  min-width: 0;
+  color: #7c90a9;
+  font-size: 8px;
+}
+.skeletal-track-label.group {
+  height: 27px;
+  color: #bdc9d8;
+  background: #0d1927;
+}
+.skeletal-track-label.group strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 9px;
+}
+.skeletal-track-label.lane { padding-left: 24px; }
+.skeletal-track-row {
+  position: relative;
+  min-width: 100%;
+  background: #08111c;
+}
+.skeletal-track-row.group {
+  height: 27px;
+  background: #0b1624;
+}
+.skeletal-track-guide {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(68,94,126,.15);
+}
+.skeletal-track-key {
+  position: absolute;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  border: 1px solid #74d4ff;
+  background: #188dc7;
+  transform: translate(-50%, -50%) rotate(45deg);
+  cursor: pointer;
+  box-shadow: 0 0 0 2px rgba(24,141,199,.08);
+}
+.skeletal-track-key:hover,
+.skeletal-track-key:focus-visible {
+  background: #7fdcff;
+  border-color: #d7f5ff;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(79,188,240,.2);
+}
+.skeletal-tracks-playhead {
+  position: absolute;
+  z-index: 5;
+  top: 25px;
+  bottom: 0;
+  width: 1px;
+  pointer-events: none;
+  background: #ff6e81;
+  box-shadow: 0 0 7px rgba(255,110,129,.45);
+}
+.skeletal-tracks-playhead::before {
+  content: attr(data-frame);
+  position: absolute;
+  top: -22px;
+  left: 0;
+  transform: translateX(-50%);
+  min-width: 18px;
+  height: 15px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  background: #7b3142;
+  color: #ffdce3;
+  font-size: 7px;
+}
+.skeletal-track-entity-icon,
+.skeletal-track-entity-icon svg {
+  width: 11px;
+  height: 11px;
+}
+@media (max-width: 900px) {
+  .skeletal-tracks-body { grid-template-columns: 112px minmax(0,1fr); }
+  .skeletal-track-density { display: none; }
+}
