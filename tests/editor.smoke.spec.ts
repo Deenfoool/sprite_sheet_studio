@@ -161,7 +161,7 @@ test('Animated WebP muxer produces RIFF animation when Canvas WebP encoding is s
   }
 });
 
-test('custom anchors and skeletal easing persist in a full SSS project', async ({ page }) => {
+test('custom anchors, skeletal easing and IK persist in a full SSS project', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Try demo' }).click();
 
@@ -182,6 +182,10 @@ test('custom anchors and skeletal easing persist in a full SSS project', async (
   await page.locator('#skCurveX2').fill('0.7');
   await page.locator('#skCurveY2').fill('0.9');
   await page.locator('#skCurveY2').blur();
+
+  await page.locator('#rigAddBone').click();
+  await page.locator('#ikAddChain').click();
+  await expect(page.locator('#ikChainSelect option')).toHaveCount(1);
   await page.getByRole('button', { name: /Back to animator/i }).click();
 
   const projectDownload = page.waitForEvent('download');
@@ -196,13 +200,15 @@ test('custom anchors and skeletal easing persist in a full SSS project', async (
     expect(saved.projectFormat).toBe('sss-full-project');
     expect(saved.rigging).toBeTruthy();
     expect(saved.skeletal).toBeTruthy();
+    expect(saved.ik).toBeTruthy();
+    expect(saved.ik.chains).toHaveLength(1);
     expect(saved.animations.idle.frames[0].customAnchor).toBeTruthy();
     expect(saved.skeletal.easingExtensions?.idle?.interpolation).toBe('bezier');
     expect(saved.skeletal.easingExtensions?.idle?.curve).toEqual([0.2, 0.1, 0.7, 0.9]);
   }
 });
 
-test('rigging, IK locks and skeletal scale controls are mounted', async ({ page }) => {
+test('rigging supports multiple simultaneous IK chains', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: /Rigging/i }).click();
 
@@ -210,11 +216,25 @@ test('rigging, IK locks and skeletal scale controls are mounted', async ({ page 
   await expect(page.locator('#ikEnable')).toBeVisible();
   await expect(page.locator('#ikLockA')).toBeVisible();
   await expect(page.locator('#ikLockB')).toBeVisible();
+  await expect(page.locator('#ikChainSelect')).toBeVisible();
   await expect(page.getByRole('button', { name: /Load parts/i })).toBeVisible();
   await expect(page.locator('#rigPartScaleX')).toBeAttached();
   await expect(page.locator('#rigPartScaleY')).toBeAttached();
   await expect(page.locator('#skAnimSelect')).toBeVisible();
   await expect(page.locator('#skCurvePreview')).toBeVisible();
+
+  await page.locator('#rigAddBone').click();
+  await page.locator('#ikAddChain').click();
+  await expect(page.locator('#ikChainSelect option')).toHaveCount(1);
+
+  await page.locator('#rigTree .rig-tree-item').first().click();
+  await page.locator('#rigAddBone').click();
+  await page.locator('#ikAddChain').click();
+  await expect(page.locator('#ikChainSelect option')).toHaveCount(2);
+  await expect(page.locator('#ikChainCount')).toHaveText('2 chains');
+
+  await page.locator('#ikEnable').check();
+  await expect(page.locator('#ikStatus')).toContainText('2 total targets');
 
   await page.getByRole('button', { name: /Back to animator/i }).click();
   await expect(page.locator('.rig-overlay')).toHaveClass(/hidden/);
