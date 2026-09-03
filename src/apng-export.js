@@ -1,5 +1,7 @@
 (() => {
   const signature = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
+  const workerUrl = new URL('./src/apng-worker.js', document.baseURI).href;
+  const MEMORY_LIMIT = 512 * 1024 * 1024;
 
   const crcTable = (() => {
     const table = new Uint32Array(256);
@@ -78,46 +80,110 @@
     ]);
   }
 
-  async function exportApng() {
-    if (!state.frames.length) return;
+  function rawEstimate() {
+    if (!state.frames.length) return 0;
+    const sequence = playbackSequence();
+    const { width, height } = normalizedSize();
+    return width * height * 4 * sequence.length;
+  }
+
+  function ensureMemoryBudget() {
+    const estimate = rawEstimate();
+    if (estimate <= MEMORY_LIMIT) return true;
+    toast(`APNG export would need about ${Math.round(estimate / 1024 / 1024)} MB of raw frame memory. Reduce the animation first.`, true);
+    return false;
+  }
+
+  async function exportApngMain() {
+    if (!state.frames.length || !ensureMemoryBudget()) return;
     const sequence = playbackSequence();
     if (!sequence.length) return;
 
     const { width, height } = normalizedSize();
-    const rawEstimate = width * height * 4 * sequence.length;
-    if (rawEstimate > 512 * 1024 * 1024) {
-      toast(`APNG export would need about ${Math.round(rawEstimate / 1024 / 1024)} MB of raw frame memory. Reduce the animation first.`, true);
-      return;
+    const parts = [signature];
+    const ihdr = concat([be32(width), be32(height), new Uint8Array([8, 6, 0, 0, 0])]);
+    parts.push(chunk('IHDR', ihdr));
+    parts.push(chunk('acTL', concat([be32(sequence.length), be32(state.loop ? 0 : 1)])));
+
+    let apngSequence = 0;
+    for (let index = 0; index < sequence.length; index += 1) {
+      const frameIndex = sequence[index];
+      const frame = state.frames[frameIndex];
+      const canvas = drawNormalizedFrame(frame);
+      const delayMs = Math.max(1, Math.round((1000 / state.fps) * (frame.hold || 1)));
+      parts.push(chunk('fcTL', frameControl(apngSequence++, width, height, delayMs)));
+      apngBtn.innerHTML = `<span>APNG ${Math.round(((index + 1) / sequence.length) * 100)}%</span><small>main thread fallback</small>`;
+      const compressed = await deflate(scanlines(canvas));
+      if (index === 0) parts.push(chunk('IDAT', compressed));
+      else parts.push(chunk('fdAT', concat([be32(apngSequence++), compressed])));
+      if (index % 2 === 0) await new Promise((resolve) => requestAnimationFrame(resolve));
     }
 
+    parts.push(chunk('IEND'));
+    downloadBlob(new Blob([concat(parts)], { type: 'image/apng' }), 'sprite-animation.png');
+    toast('APNG exported');
+  }
+
+  async function prepareWorkerFrames() {
+    const sequence = playbackSequence();
+    const frames = [];
+    const transfers = [];
+    for (let index = 0; index < sequence.length; index += 1) {
+      const frame = state.frames[sequence[index]];
+      const canvas = drawNormalizedFrame(frame);
+      const image = get2d(canvas).getImageData(0, 0, canvas.width, canvas.height);
+      const buffer = image.data.buffer.slice(0);
+      frames.push({
+        width: canvas.width,
+        height: canvas.height,
+        delay: Math.max(1, Math.round((1000 / state.fps) * (frame.hold || 1))),
+        data: buffer
+      });
+      transfers.push(buffer);
+      apngBtn.innerHTML = `<span>Preparing ${Math.round(((index + 1) / sequence.length) * 100)}%</span><small>APNG worker</small>`;
+      if (index % 6 === 0) await new Promise((resolve) => requestAnimationFrame(resolve));
+    }
+    return { frames, transfers };
+  }
+
+  async function exportApngWorker() {
+    if (!state.frames.length || !ensureMemoryBudget()) return;
+    if (typeof Worker === 'undefined') return exportApngMain();
+
+    let worker;
+    try {
+      const { frames, transfers } = await prepareWorkerFrames();
+      worker = new Worker(workerUrl, { type: 'module' });
+      const result = await new Promise((resolve, reject) => {
+        worker.addEventListener('message', (event) => {
+          if (event.data?.type === 'progress') {
+            apngBtn.innerHTML = `<span>APNG ${Math.round((event.data.value || 0) * 100)}%</span><small>Web Worker</small>`;
+          } else if (event.data?.type === 'done') {
+            resolve(event.data.buffer);
+          } else if (event.data?.type === 'error') {
+            reject(new Error(event.data.message || 'APNG worker failed'));
+          }
+        });
+        worker.addEventListener('error', (event) => reject(event.error || new Error(event.message || 'APNG worker crashed')));
+        worker.postMessage({ frames, loop: state.loop }, transfers);
+      });
+      downloadBlob(new Blob([result], { type: 'image/apng' }), 'sprite-animation.png');
+      toast('APNG exported in background worker');
+    } catch (error) {
+      console.error(error);
+      toast('APNG worker unavailable; retrying on the main thread.', true);
+      await exportApngMain();
+    } finally {
+      worker?.terminate();
+    }
+  }
+
+  async function exportApng() {
+    if (!state.frames.length) return;
     const original = apngBtn.innerHTML;
     apngBtn.disabled = true;
-    const parts = [signature];
     try {
-      const ihdr = concat([
-        be32(width), be32(height),
-        new Uint8Array([8, 6, 0, 0, 0])
-      ]);
-      parts.push(chunk('IHDR', ihdr));
-      parts.push(chunk('acTL', concat([be32(sequence.length), be32(state.loop ? 0 : 1)])));
-
-      let apngSequence = 0;
-      for (let index = 0; index < sequence.length; index += 1) {
-        const frameIndex = sequence[index];
-        const frame = state.frames[frameIndex];
-        const canvas = drawNormalizedFrame(frame);
-        const delayMs = Math.max(1, Math.round((1000 / state.fps) * (frame.hold || 1)));
-        parts.push(chunk('fcTL', frameControl(apngSequence++, width, height, delayMs)));
-        apngBtn.innerHTML = `<span>APNG ${Math.round((index / sequence.length) * 100)}%</span><small>compressing</small>`;
-        const compressed = await deflate(scanlines(canvas));
-        if (index === 0) parts.push(chunk('IDAT', compressed));
-        else parts.push(chunk('fdAT', concat([be32(apngSequence++), compressed])));
-        if (index % 2 === 0) await new Promise((resolve) => requestAnimationFrame(resolve));
-      }
-
-      parts.push(chunk('IEND'));
-      downloadBlob(new Blob([concat(parts)], { type: 'image/apng' }), 'sprite-animation.png');
-      toast('APNG exported');
+      await exportApngWorker();
     } catch (error) {
       console.error(error);
       toast(error instanceof Error ? error.message : 'APNG export failed.', true);
@@ -131,12 +197,11 @@
   if (!exportGrid) return;
   const apngBtn = document.createElement('button');
   apngBtn.className = 'btn export-btn';
-  apngBtn.innerHTML = '<span>Animated PNG</span><small>APNG · alpha</small>';
+  apngBtn.innerHTML = '<span>Animated PNG</span><small>APNG · Web Worker</small>';
   apngBtn.disabled = !state.frames.length;
   apngBtn.addEventListener('click', () => void exportApng());
 
-  const gifButton = el.gif;
-  gifButton.insertAdjacentElement('afterend', apngBtn);
+  el.gif.insertAdjacentElement('afterend', apngBtn);
 
   const observer = new MutationObserver(() => { apngBtn.disabled = !state.frames.length; });
   observer.observe(el.frames, { childList: true });
