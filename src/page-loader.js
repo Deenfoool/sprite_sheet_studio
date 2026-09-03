@@ -5,6 +5,7 @@ const toolsModuleUrl = new URL('./sprite-tools.js', import.meta.url).href;
 const extensionUrl = new URL('./editor-extensions.js', import.meta.url);
 const customAnchorUrl = new URL('./custom-anchor.js', import.meta.url);
 const engineExportsUrl = new URL('./engine-exports.js', import.meta.url);
+const multiAtlasUrl = new URL('./multi-atlas.js', import.meta.url);
 const apngExportUrl = new URL('./apng-export.js', import.meta.url);
 const asepriteExportUrl = new URL('./aseprite-export.js', import.meta.url);
 const aiFixerUrl = new URL('./ai-fixer.js', import.meta.url);
@@ -114,11 +115,12 @@ function exposeRigBridge(rigging) {
 
 async function boot() {
   const sourceUrl = new URL('./main-v2.ts', import.meta.url);
-  const [source, extension, customAnchor, engineExports, apngExport, asepriteExport, aiFixer, uxTools, performanceTools, performanceGuards, rigging, skeletalAnimation, mesh, ik] = await Promise.all([
+  const [source, extension, customAnchor, engineExports, multiAtlas, apngExport, asepriteExport, aiFixer, uxTools, performanceTools, performanceGuards, rigging, skeletalAnimation, mesh, ik] = await Promise.all([
     fetchText(sourceUrl, 'editor source'),
     fetchText(extensionUrl, 'project system'),
     fetchText(customAnchorUrl, 'custom anchor tools'),
     fetchText(engineExportsUrl, 'engine exporters'),
+    fetchText(multiAtlasUrl, 'multi-atlas exporter'),
     fetchText(apngExportUrl, 'APNG exporter'),
     fetchText(asepriteExportUrl, 'Aseprite exporter'),
     fetchText(aiFixerUrl, 'AI sprite fixer'),
@@ -132,7 +134,7 @@ async function boot() {
   ]);
 
   const projectExtension = exposeProjectBridge(patchProjectExtension(extension));
-  const js = `${stripMainTypeScript(source)}\n\n${projectExtension}\n\n${customAnchor}\n\n${engineExports}\n\n${apngExport}\n\n${asepriteExport}\n\n${aiFixer}\n\n${uxTools}\n\n${performanceTools}\n\n${performanceGuards}\n\n${exposeRigBridge(rigging)}\n\n${skeletalAnimation}\n\n${mesh}\n\n${ik}`;
+  const js = `${stripMainTypeScript(source)}\n\n${projectExtension}\n\n${customAnchor}\n\n${engineExports}\n\n${multiAtlas}\n\n${apngExport}\n\n${asepriteExport}\n\n${aiFixer}\n\n${uxTools}\n\n${performanceTools}\n\n${performanceGuards}\n\n${exposeRigBridge(rigging)}\n\n${skeletalAnimation}\n\n${mesh}\n\n${ik}`;
 
   const blobUrl = URL.createObjectURL(new Blob([`${js}\n//# sourceURL=sprite-sheet-studio-runtime.js`], { type: 'text/javascript' }));
   try {
