@@ -6,10 +6,80 @@
     <meta name="theme-color" content="#0b1220" />
     <meta name="description" content="Sprite Sheet Studio — slice, align, animate and export game-ready sprite sheets directly in your browser." />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="stylesheet" href="./src/styles.css" />
+    <link rel="stylesheet" href="./src/smart-tools.css" />
     <title>Sprite Sheet Studio</title>
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="/src/main-v2.ts"></script>
+
+    <script type="module">
+      const isViteDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+
+      if (isViteDev) {
+        await import('/src/main-v2.ts');
+      } else {
+        const app = document.querySelector('#app');
+
+        try {
+          const compilerScript = document.createElement('script');
+          compilerScript.src = 'https://cdn.jsdelivr.net/npm/typescript@5.8.3/lib/typescript.js';
+          compilerScript.crossOrigin = 'anonymous';
+          document.head.append(compilerScript);
+
+          await new Promise((resolve, reject) => {
+            compilerScript.addEventListener('load', resolve, { once: true });
+            compilerScript.addEventListener('error', () => reject(new Error('TypeScript compiler failed to load')), { once: true });
+          });
+
+          const ts = window.ts;
+          if (!ts) throw new Error('TypeScript compiler is unavailable');
+
+          const readSource = async (path) => {
+            const response = await fetch(path, { cache: 'no-cache' });
+            if (!response.ok) throw new Error(`Could not load ${path}: ${response.status}`);
+            return response.text();
+          };
+
+          const transpile = (source, filename) => ts.transpileModule(source, {
+            fileName: filename,
+            compilerOptions: {
+              target: ts.ScriptTarget.ES2022,
+              module: ts.ModuleKind.ES2022,
+              moduleResolution: ts.ModuleResolutionKind.Bundler,
+              isolatedModules: true
+            }
+          }).outputText;
+
+          const toolsSource = await readSource('./src/sprite-tools.ts');
+          const toolsJs = transpile(toolsSource, 'sprite-tools.ts');
+          const toolsUrl = URL.createObjectURL(new Blob([toolsJs], { type: 'text/javascript' }));
+
+          const mainSource = await readSource('./src/main-v2.ts');
+          let mainJs = transpile(mainSource, 'main-v2.ts');
+
+          mainJs = mainJs
+            .replace(/import\s+["']\.\/styles\.css["'];?/g, '')
+            .replace(/import\s+["']\.\/smart-tools\.css["'];?/g, '')
+            .replace(/from\s+["']gifenc["']/g, "from 'https://esm.sh/gifenc@1.0.3'")
+            .replace(/from\s+["']fflate["']/g, "from 'https://esm.sh/fflate@0.8.2'")
+            .replace(/from\s+["']\.\/sprite-tools["']/g, `from '${toolsUrl}'`);
+
+          const mainUrl = URL.createObjectURL(new Blob([mainJs], { type: 'text/javascript' }));
+          await import(mainUrl);
+        } catch (error) {
+          console.error(error);
+          if (app) {
+            app.innerHTML = `
+              <main style="min-height:100vh;display:grid;place-items:center;background:#080d16;color:#e8edf6;font:14px system-ui;padding:24px">
+                <div style="max-width:560px;border:1px solid #213149;border-radius:14px;background:#0e1624;padding:24px">
+                  <h1 style="margin:0 0 10px;font-size:20px">Sprite Sheet Studio</h1>
+                  <p style="margin:0;color:#9cadc3;line-height:1.55">The editor could not start. Reload the page; if the problem persists, check that external module CDNs are reachable.</p>
+                </div>
+              </main>`;
+          }
+        }
+      }
+    </script>
   </body>
 </html>
