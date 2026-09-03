@@ -2,6 +2,7 @@ const app = document.querySelector('#app');
 const gifModuleUrl = new URL('./vendor/gifenc.esm.js', import.meta.url).href;
 const zipModuleUrl = new URL('./zip-store.js', import.meta.url).href;
 const toolsModuleUrl = new URL('./sprite-tools.js', import.meta.url).href;
+const extensionUrl = new URL('./editor-extensions.js', import.meta.url);
 
 function showFatal(error) {
   console.error('[Sprite Sheet Studio] startup failed', error);
@@ -59,8 +60,13 @@ function stripMainTypeScript(source) {
     .replace(/\s+as\s+(?:AnchorMode|PreviewBackground|HTMLElement\s*\|\s*null)\b/g, '');
 
   code = stripFunctionTypes(code);
-
   return code;
+}
+
+async function fetchText(url, label) {
+  const response = await fetch(url, { cache: 'no-cache' });
+  if (!response.ok) throw new Error(`Could not load ${label}: HTTP ${response.status}`);
+  return response.text();
 }
 
 async function boot() {
@@ -70,10 +76,11 @@ async function boot() {
   }
 
   const sourceUrl = new URL('./main-v2.ts', import.meta.url);
-  const response = await fetch(sourceUrl, { cache: 'no-cache' });
-  if (!response.ok) throw new Error(`Could not load editor source: HTTP ${response.status}`);
-  const source = await response.text();
-  const js = stripMainTypeScript(source);
+  const [source, extension] = await Promise.all([
+    fetchText(sourceUrl, 'editor source'),
+    fetchText(extensionUrl, 'project system')
+  ]);
+  const js = `${stripMainTypeScript(source)}\n\n${extension}`;
 
   const blobUrl = URL.createObjectURL(new Blob([`${js}\n//# sourceURL=sprite-sheet-studio-runtime.js`], { type: 'text/javascript' }));
   try {
