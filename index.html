@@ -5,8 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0b1220" />
     <meta name="description" content="Sprite Sheet Studio — slice, align, animate and export game-ready sprite sheets directly in your browser." />
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <meta property="og:title" content="Sprite Sheet Studio" />
+    <meta property="og:description" content="Local-first sprite sheet editor for slicing, cleanup, animation, rigging and game-ready export." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://deenfoool.github.io/sprite_sheet_studio/assets/brand/logo-full-large.png" />
+
+    <link rel="icon" type="image/svg+xml" href="./assets/icons/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./assets/icons/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="./assets/icons/favicon-16x16.png" />
+    <link rel="shortcut icon" href="./assets/icons/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/apple-touch-icon.png" />
+    <link rel="manifest" href="./assets/icons/site.webmanifest" />
+
+    <link rel="preconnect" href="https://unpkg.com" crossorigin />
+
     <link rel="stylesheet" href="./src/styles.css" />
+    <link rel="stylesheet" href="./src/brand.css" />
+    <link rel="stylesheet" href="./src/icons.css" />
     <link rel="stylesheet" href="./src/smart-tools.css" />
     <link rel="stylesheet" href="./src/editor-extensions.css" />
     <link rel="stylesheet" href="./src/custom-anchor.css" />
@@ -25,11 +40,15 @@
     <link rel="stylesheet" href="./src/ik-stretch.css" />
     <link rel="stylesheet" href="./src/diagnostics.css" />
     <link rel="stylesheet" href="./src/accessibility.css" />
+
+    <script defer src="https://unpkg.com/lucide@1.33.0/dist/umd/lucide.min.js"></script>
     <title>Sprite Sheet Studio</title>
   </head>
   <body>
     <div id="app"></div>
     <script type="module" src="./src/page-loader.js"></script>
+    <script type="module" src="./src/brand.js"></script>
+    <script type="module" src="./src/icons.js"></script>
     <script type="module" src="./src/custom-preview.js"></script>
     <script type="module" src="./src/source-cell-selection.js"></script>
     <script type="module" src="./src/cleanup-compare.js"></script>
