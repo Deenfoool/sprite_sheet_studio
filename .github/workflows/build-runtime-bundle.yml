@@ -1,0 +1,64 @@
+name: Build committed Pages runtime
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/main-v2.ts'
+      - 'src/editor-extensions.js'
+      - 'src/custom-anchor.js'
+      - 'src/engine-exports.js'
+      - 'src/multi-atlas.js'
+      - 'src/apng-export.js'
+      - 'src/aseprite-export.js'
+      - 'src/ai-fixer.js'
+      - 'src/ux-tools.js'
+      - 'src/performance.js'
+      - 'src/performance-guards.js'
+      - 'src/rigging.js'
+      - 'src/skeletal-animation.js'
+      - 'src/mesh.js'
+      - 'src/ik.js'
+      - 'src/rig-project-persistence.js'
+      - 'scripts/build-runtime-bundle.mjs'
+      - 'package.json'
+      - '.github/workflows/build-runtime-bundle.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: committed-pages-runtime
+  cancel-in-progress: true
+
+jobs:
+  build-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build committed runtime
+        run: npm run build:runtime
+
+      - name: Commit refreshed bundle
+        shell: bash
+        run: |
+          if git diff --quiet -- src/runtime.bundle.js; then
+            echo 'Runtime bundle is already current.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/runtime.bundle.js
+          git commit -m 'chore(pages): refresh committed runtime bundle [skip ci]'
+          git push
