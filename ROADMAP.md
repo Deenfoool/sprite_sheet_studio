@@ -38,6 +38,8 @@ Sprite Sheet Studio — local-first браузерный редактор для
 
 ✅ Playwright browser smoke suite и test fixtures.
 
+✅ Playwright projects для Chromium / Firefox / WebKit.
+
 🟡 Генератор committed runtime bundle и workflow подготовлены, но GitHub Actions в репозитории пока не запускаются.
 
 ⬜ Переключить production Pages с runtime TypeScript stripping на подтверждённый committed bundle.
@@ -180,6 +182,8 @@ Sprite Sheet Studio — local-first браузерный редактор для
 
 ✅ Skeletal easing / cubic-bezier settings в полном `.sss`.
 
+✅ Multi-chain IK targets / constraints в полном `.sss`.
+
 ---
 
 # Phase 6 — Extended Export — ✅ DONE
@@ -300,9 +304,13 @@ Sprite Sheet Studio — local-first браузерный редактор для
 
 ✅ Independent Lock Rotation для parent/end joint.
 
-✅ IK pose можно сохранить keyframe.
+✅ **Multiple simultaneous IK chains** с отдельными targets и active-chain manager.
 
-⬜ Multiple simultaneous IK chains.
+✅ Каждая IK chain может быть отдельно включена/выключена.
+
+✅ Multi-chain IK сохраняется в `.sss` и local extras autosave.
+
+✅ IK pose можно сохранить keyframe.
 
 ⬜ Dedicated pole-target object.
 
@@ -386,6 +394,16 @@ Sprite Sheet Studio — local-first браузерный редактор для
 
 ✅ Before / After cleanup comparison.
 
+✅ Focus-visible treatment.
+
+✅ Skip-to-workspace link.
+
+✅ Live region для toast/status announcements.
+
+✅ Canvas/dialog semantics.
+
+✅ `prefers-reduced-motion` support.
+
 ⬜ Named guide manager.
 
 ⬜ Custom shortcut editor.
@@ -454,7 +472,7 @@ Backend остаётся необязательным.
 
 ✅ `?selftest=1` для быстрого smoke check опубликованного Pages.
 
-✅ Canvas / IndexedDB / Worker / CompressionStream checks.
+✅ Canvas / IndexedDB / Worker / CompressionStream / WebP capability checks.
 
 ✅ Проверки local GIF / ZIP runtime.
 
@@ -470,7 +488,15 @@ Backend остаётся необязательным.
 
 ✅ Test sprite fixtures.
 
-✅ Smoke-тесты загрузки, slicing, Object Slice, cell selection, cleanup comparison, exports, `.sss`, rigging и diagnostics.
+✅ Smoke-тесты загрузки, slicing, Object Slice, cell selection, cleanup comparison, exports, `.sss`, rigging, multi-chain IK, accessibility и diagnostics.
+
+✅ Playwright targets: Chromium / Firefox / WebKit.
+
+✅ `BROWSER_SUPPORT.md` с capability matrix и release rule.
+
+✅ Accessibility runtime и smoke coverage.
+
+✅ `CHANGELOG.md`.
 
 ✅ Release checklist.
 
@@ -478,13 +504,9 @@ Backend остаётся необязательным.
 
 ⬜ Перевести Pages на committed production bundle без runtime TS stripping.
 
-⬜ Browser compatibility matrix и ручной cross-browser pass.
-
-⬜ Accessibility pass.
+⬜ Реально выполнить и зафиксировать полный three-engine browser pass для release candidate.
 
 ⬜ Выбрать license.
-
-⬜ Semantic versioning / CHANGELOG.
 
 ⬜ Release tags.
 
@@ -495,16 +517,16 @@ Backend остаётся необязательным.
 ## Release 0.4 — Stabilization
 
 1. Перевести Pages на проверенный committed production bundle без runtime TypeScript stripping.
-2. Browser compatibility pass: Chromium / Firefox / WebKit.
-3. Accessibility pass: keyboard focus, labels, contrast, reduced motion.
-4. CHANGELOG + release versioning.
-5. Выбрать license перед публичным стабильным релизом.
+2. Реально выполнить Chromium / Firefox / WebKit suite на release candidate.
+3. Дополнительно пройти keyboard/contrast audit на живом Pages.
+4. Выбрать license перед публичным стабильным релизом.
+5. Создать release tag после успешного browser pass.
 
 ## Release 0.5 — Rigging polish
 
 1. Track-oriented skeletal timeline.
-2. Multiple IK chains.
-3. Dedicated pole targets / stretch behavior.
+2. Dedicated IK pole targets.
+3. IK stretch / unreachable-target modes.
 4. Better mesh topology / weights UI.
 5. Better rig/game-engine export.
 
@@ -518,7 +540,7 @@ Backend остаётся необязательным.
 - local full-project `.sss` persistence;
 - GIF / APNG / WebP / PNG / atlas / multi-atlas exports;
 - Godot / Phaser / Unity package exports;
-- basic rigging + skeletal animation + IK + mesh MVP;
+- basic rigging + skeletal animation + multi-chain IK + mesh MVP;
 - stable GitHub Pages build;
-- documented browser support;
+- documented and actually verified browser support;
 - no mandatory backend.
