@@ -1,6 +1,20 @@
 import { readFile } from 'node:fs/promises';
 import { test, expect } from '@playwright/test';
 
+async function loadFourFrameFixture(page) {
+  const encoded = await readFile('tests/fixtures/transparent-4-frame-sheet.png.base64', 'utf8');
+  const buffer = Buffer.from(encoded.trim(), 'base64');
+  await page.locator('#fileInput').setInputFiles({
+    name: 'transparent-4-frame-sheet.png',
+    mimeType: 'image/png',
+    buffer
+  });
+  await expect(page.locator('#sourceName')).toContainText('transparent-4-frame-sheet.png');
+  await page.locator('#autoSliceBtn').click();
+  await expect(page.locator('#colsInput')).toHaveValue('4');
+  await expect(page.locator('#rowsInput')).toHaveValue('1');
+}
+
 test('boots the complete editor runtime without page errors', async ({ page }) => {
   const pageErrors: string[] = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
@@ -22,22 +36,29 @@ test('boots the complete editor runtime without page errors', async ({ page }) =
 });
 
 test('loads a real transparent sprite sheet and auto-slices four frames', async ({ page }) => {
-  const encoded = await readFile('tests/fixtures/transparent-4-frame-sheet.png.base64', 'utf8');
-  const buffer = Buffer.from(encoded.trim(), 'base64');
-
   await page.goto('/');
-  await page.locator('#fileInput').setInputFiles({
-    name: 'transparent-4-frame-sheet.png',
-    mimeType: 'image/png',
-    buffer
-  });
-
-  await expect(page.locator('#sourceName')).toContainText('transparent-4-frame-sheet.png');
-  await page.locator('#autoSliceBtn').click();
-  await expect(page.locator('#colsInput')).toHaveValue('4');
-  await expect(page.locator('#rowsInput')).toHaveValue('1');
+  await loadFourFrameFixture(page);
   await expect(page.locator('#frames .frame-card')).toHaveCount(4);
   await expect(page.locator('#frameCount')).toHaveText('4');
+});
+
+test('source sheet cells can be excluded and restored by clicking the grid', async ({ page }) => {
+  await page.goto('/');
+  await loadFourFrameFixture(page);
+  await expect(page.locator('#frames .frame-card')).toHaveCount(4);
+
+  const source = page.locator('#sourceCanvas');
+  const box = await source.boundingBox();
+  expect(box).not.toBeNull();
+  if (!box) return;
+
+  await page.mouse.click(box.x + box.width * 0.125, box.y + box.height * 0.5);
+  await expect(page.locator('#frames .frame-card')).toHaveCount(3);
+  await expect(page.locator('[data-source-cell-status]')).toContainText('3/4');
+
+  await page.mouse.click(box.x + box.width * 0.125, box.y + box.height * 0.5);
+  await expect(page.locator('#frames .frame-card')).toHaveCount(4);
+  await expect(page.locator('[data-source-cell-status]')).toContainText('All 4');
 });
 
 test('demo animation plays and exports through workers', async ({ page }) => {
