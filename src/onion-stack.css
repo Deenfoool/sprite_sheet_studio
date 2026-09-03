@@ -1,0 +1,44 @@
+.onion-stack-controls {
+  display: grid;
+  gap: 7px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #1d2a3d;
+}
+
+.onion-stack-controls label {
+  display: grid;
+  grid-template-columns: 58px 1fr auto;
+  align-items: center;
+  gap: 7px;
+  color: #8da0b8;
+  font-size: 10px;
+}
+
+.onion-stack-controls .select {
+  min-width: 0;
+  height: 28px;
+  font-size: 10px;
+}
+
+.onion-stack-controls input[type='range'] {
+  width: 100%;
+  accent-color: #69c7ff;
+}
+
+.onion-stack-controls span {
+  color: #b9c8da;
+  font-variant-numeric: tabular-nums;
+}
+
+.onion-stack-overlay {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+
+.onion-stack-foreground {
+  position: relative;
+  z-index: 2;
+}
