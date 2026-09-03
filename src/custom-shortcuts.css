@@ -1,0 +1,130 @@
+.sss-shortcuts-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10020;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(3,8,15,.72);
+  backdrop-filter: blur(8px);
+}
+.sss-shortcuts-modal.hidden { display: none; }
+.sss-shortcuts-card {
+  width: min(680px, 100%);
+  max-height: min(760px, 90vh);
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0,1fr) auto;
+  overflow: hidden;
+  border: 1px solid #2b405b;
+  border-radius: 14px;
+  background: #0b1421;
+  box-shadow: 0 24px 90px rgba(0,0,0,.55);
+}
+.sss-shortcuts-head,
+.sss-shortcuts-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #1d2c40;
+}
+.sss-shortcuts-head > div { display: grid; gap: 2px; }
+.sss-shortcuts-head strong { color: #dce6f2; font-size: 12px; }
+.sss-shortcuts-head small,
+.sss-shortcuts-footer { color: #70849e; font-size: 9px; }
+.sss-shortcut-create {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 170px auto;
+  gap: 8px;
+  padding: 12px;
+}
+.sss-shortcut-create label { display: grid; gap: 5px; color: #7f93ac; font-size: 9px; }
+.sss-shortcut-create select {
+  min-width: 0;
+  height: 34px;
+  border: 1px solid #253a53;
+  border-radius: 8px;
+  background: #09131f;
+  color: #d5e0ee;
+  padding: 0 8px;
+}
+.shortcut-record.recording {
+  border-color: #d4903f;
+  color: #ffd28d;
+  background: #352817;
+}
+.sss-shortcut-hint {
+  margin: 0 12px 10px;
+  padding: 8px;
+  border: 1px solid #1d3047;
+  border-radius: 7px;
+  background: #09131f;
+  color: #687d97;
+  font-size: 8px;
+  line-height: 1.45;
+}
+.sss-shortcut-list {
+  overflow: auto;
+  display: grid;
+  gap: 6px;
+  padding: 0 12px 12px;
+}
+.sss-shortcut-row {
+  display: grid;
+  grid-template-columns: 32px minmax(0,1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  min-height: 44px;
+  border: 1px solid #1e3046;
+  border-radius: 8px;
+  background: #0a1420;
+  padding: 5px 7px;
+}
+.sss-shortcut-icon {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: #102033;
+  color: #73c8ff;
+}
+.sss-shortcut-icon svg { width: 14px; height: 14px; }
+.sss-shortcut-copy { min-width: 0; display: grid; gap: 2px; }
+.sss-shortcut-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #cbd7e5; font-size: 10px; }
+.sss-shortcut-copy small { color: #61758f; font-size: 8px; }
+.sss-shortcut-row kbd {
+  min-width: 64px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  padding: 0 7px;
+  border: 1px solid #334a67;
+  border-radius: 6px;
+  background: #121f30;
+  color: #9fb3cb;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 8px;
+}
+.sss-shortcut-empty {
+  padding: 24px 12px;
+  border: 1px dashed #22364e;
+  border-radius: 8px;
+  color: #60748d;
+  text-align: center;
+  font-size: 9px;
+}
+.sss-shortcuts-footer {
+  border-top: 1px solid #1d2c40;
+  border-bottom: 0;
+  background: #09111c;
+}
+.shortcut-editor-trigger { display: inline-flex; align-items: center; gap: 6px; }
+.shortcut-editor-trigger svg { width: 13px; height: 13px; }
+@media (max-width: 760px) {
+  .sss-shortcut-create { grid-template-columns: 1fr; }
+  .shortcut-editor-trigger span { display: none; }
+  .sss-shortcut-row { grid-template-columns: 30px minmax(0,1fr) auto; }
+  .sss-shortcut-row kbd { grid-column: 2; justify-self: start; }
+}
