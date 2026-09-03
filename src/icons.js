@@ -4,7 +4,6 @@ let renderQueued = false;
 const byId = {
   demoBtn: 'sparkles',
   clearBtn: 'trash-2',
-  autoSliceBtn: 'scan-line',
   trimBtn: 'crop',
   alignBtn: 'align-center',
   resliceBtn: 'grid-3x3',
@@ -23,7 +22,7 @@ const byId = {
   aiAutoFix: 'wand-sparkles',
   aiPingPong: 'repeat-2',
   meshGenerate: 'grid-3x3',
-  meshAutoWeight: 'scale-3d',
+  meshAutoWeight: 'sliders-horizontal',
   meshRestore: 'rotate-ccw',
   ikAddChain: 'plus',
   ikRemoveChain: 'trash-2',
@@ -62,12 +61,30 @@ const textRules = [
   [/Export JSON/i, 'download'],
   [/Apply ping-pong/i, 'repeat-2'],
   [/Select all/i, 'list-checks'],
-  [/Invert/i, 'replace-all']
+  [/Invert/i, 'refresh-cw']
 ];
+
+function normalizePlayButton(button) {
+  if (button.id === 'playBtn') {
+    const paused = /pause|❚❚/i.test(button.textContent || '');
+    const label = paused ? 'Pause' : 'Play';
+    if (!button.querySelector('.sss-btn-icon') && button.textContent?.trim() !== label) button.textContent = label;
+    button.setAttribute('aria-label', label);
+    return;
+  }
+
+  if (button.id === 'skPlay') {
+    const paused = /❚❚|pause/i.test(button.textContent || '');
+    const label = paused ? 'Pause skeletal animation' : 'Play skeletal animation';
+    if (!button.querySelector('.sss-btn-icon')) button.textContent = '';
+    button.setAttribute('aria-label', label);
+    button.title = label;
+  }
+}
 
 function iconForButton(button) {
   if (button.id === 'playBtn' || button.id === 'skPlay') {
-    return /pause|❚❚/i.test(button.textContent || '') ? 'pause' : 'play';
+    return /pause|❚❚/i.test(`${button.textContent || ''} ${button.getAttribute('aria-label') || ''}`) ? 'pause' : 'play';
   }
   if (byId[button.id]) return byId[button.id];
   const text = (button.textContent || '').trim();
@@ -75,6 +92,7 @@ function iconForButton(button) {
 }
 
 function addButtonIcon(button) {
+  normalizePlayButton(button);
   const icon = iconForButton(button);
   const current = button.querySelector('.sss-btn-icon');
   if (!icon) {
