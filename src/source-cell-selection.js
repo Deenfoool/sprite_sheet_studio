@@ -1,30 +1,38 @@
-const sourceCanvas = document.querySelector('#sourceCanvas');
-const sourceName = document.querySelector('#sourceName');
-const sourceDimensions = document.querySelector('#sourceDimensions');
-const resliceButton = document.querySelector('#resliceBtn');
-const deleteButton = document.querySelector('#deleteBtn');
-const rowsInput = document.querySelector('#rowsInput');
-const colsInput = document.querySelector('#colsInput');
-const paddingXInput = document.querySelector('#paddingXInput');
-const paddingYInput = document.querySelector('#paddingYInput');
-const spacingXInput = document.querySelector('#spacingXInput');
-const spacingYInput = document.querySelector('#spacingYInput');
-const autoSliceButton = document.querySelector('#autoSliceBtn');
-const fileInput = document.querySelector('#fileInput');
+let sourceCellSelectionInitialized = false;
 
-if (
-  sourceCanvas instanceof HTMLCanvasElement &&
-  sourceName &&
-  sourceDimensions &&
-  resliceButton instanceof HTMLButtonElement &&
-  deleteButton instanceof HTMLButtonElement &&
-  rowsInput instanceof HTMLInputElement &&
-  colsInput instanceof HTMLInputElement &&
-  paddingXInput instanceof HTMLInputElement &&
-  paddingYInput instanceof HTMLInputElement &&
-  spacingXInput instanceof HTMLInputElement &&
-  spacingYInput instanceof HTMLInputElement
-) {
+function initSourceCellSelection() {
+  if (sourceCellSelectionInitialized) return true;
+
+  const sourceCanvas = document.querySelector('#sourceCanvas');
+  const sourceName = document.querySelector('#sourceName');
+  const sourceDimensions = document.querySelector('#sourceDimensions');
+  const resliceButton = document.querySelector('#resliceBtn');
+  const deleteButton = document.querySelector('#deleteBtn');
+  const rowsInput = document.querySelector('#rowsInput');
+  const colsInput = document.querySelector('#colsInput');
+  const paddingXInput = document.querySelector('#paddingXInput');
+  const paddingYInput = document.querySelector('#paddingYInput');
+  const spacingXInput = document.querySelector('#spacingXInput');
+  const spacingYInput = document.querySelector('#spacingYInput');
+  const autoSliceButton = document.querySelector('#autoSliceBtn');
+  const fileInput = document.querySelector('#fileInput');
+
+  if (
+    !(sourceCanvas instanceof HTMLCanvasElement) ||
+    !sourceName ||
+    !sourceDimensions ||
+    !(resliceButton instanceof HTMLButtonElement) ||
+    !(deleteButton instanceof HTMLButtonElement) ||
+    !(rowsInput instanceof HTMLInputElement) ||
+    !(colsInput instanceof HTMLInputElement) ||
+    !(paddingXInput instanceof HTMLInputElement) ||
+    !(paddingYInput instanceof HTMLInputElement) ||
+    !(spacingXInput instanceof HTMLInputElement) ||
+    !(spacingYInput instanceof HTMLInputElement)
+  ) return false;
+
+  sourceCellSelectionInitialized = true;
+
   const excluded = new Set();
   let applying = false;
   let signature = '';
@@ -91,7 +99,7 @@ if (
   function updateStatus() {
     const total = totalCells();
     const selected = Math.max(0, total - excluded.size);
-    status.textContent = excluded.size ? `${selected}/${total} cells selected` : `All ${total} cells selected`;
+    if (status) status.textContent = excluded.size ? `${selected}/${total} cells selected` : `All ${total} cells selected`;
     controls.classList.toggle('has-exclusions', excluded.size > 0);
     controls.hidden = resliceButton.disabled || sourceCanvas.width <= 1 || sourceCanvas.height <= 1;
   }
@@ -149,8 +157,7 @@ if (
     applying = true;
     try {
       resliceButton.click();
-      const descending = [...excluded].sort((a, b) => b - a);
-      descending.forEach(deleteTimelineIndex);
+      [...excluded].sort((a, b) => b - a).forEach(deleteTimelineIndex);
       queueOverlay();
     } finally {
       applying = false;
@@ -169,9 +176,7 @@ if (
       for (let col = 0; col < value.cols; col += 1) {
         const sx = value.paddingX + col * (value.frameWidth + value.spacingX);
         const sy = value.paddingY + row * (value.frameHeight + value.spacingY);
-        if (x >= sx && x < sx + value.frameWidth && y >= sy && y < sy + value.frameHeight) {
-          return row * value.cols + col;
-        }
+        if (x >= sx && x < sx + value.frameWidth && y >= sy && y < sy + value.frameHeight) return row * value.cols + col;
       }
     }
     return null;
@@ -201,9 +206,7 @@ if (
     ensureSignature();
     const total = totalCells();
     const next = new Set();
-    for (let index = 0; index < total; index += 1) {
-      if (!excluded.has(index)) next.add(index);
-    }
+    for (let index = 0; index < total; index += 1) if (!excluded.has(index)) next.add(index);
     excluded.clear();
     next.forEach((index) => excluded.add(index));
     applySelection();
@@ -244,4 +247,13 @@ if (
 
   ensureSignature(true);
   queueOverlay();
+  return true;
+}
+
+if (!initSourceCellSelection()) {
+  const timer = window.setInterval(() => {
+    if (!initSourceCellSelection()) return;
+    window.clearInterval(timer);
+  }, 100);
+  window.setTimeout(() => window.clearInterval(timer), 15000);
 }
