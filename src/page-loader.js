@@ -3,6 +3,7 @@ const gifModuleUrl = new URL('./vendor/gifenc.esm.js', import.meta.url).href;
 const zipModuleUrl = new URL('./zip-store.js', import.meta.url).href;
 const toolsModuleUrl = new URL('./sprite-tools.js', import.meta.url).href;
 const extensionUrl = new URL('./editor-extensions.js', import.meta.url);
+const customAnchorUrl = new URL('./custom-anchor.js', import.meta.url);
 const engineExportsUrl = new URL('./engine-exports.js', import.meta.url);
 const apngExportUrl = new URL('./apng-export.js', import.meta.url);
 const asepriteExportUrl = new URL('./aseprite-export.js', import.meta.url);
@@ -80,6 +81,23 @@ async function fetchText(url, label) {
   return response.text();
 }
 
+function patchProjectExtension(extension) {
+  let code = extension;
+  const cloneNeedle = `      hold: frame.hold ?? 1\n    };`;
+  const serializeNeedle = `          hold: frame.hold ?? 1,\n          png: frame.canvas.toDataURL('image/png')`;
+  const deserializeNeedle = `          hold: Math.max(1, Number(frame.hold) || 1),\n          canvas: await canvasFromDataUrl(frame.png)`;
+
+  if (!code.includes(cloneNeedle) || !code.includes(serializeNeedle) || !code.includes(deserializeNeedle)) {
+    throw new Error('Project System custom-anchor patch markers were not found.');
+  }
+
+  code = code
+    .replace(cloneNeedle, `      hold: frame.hold ?? 1,\n      customAnchor: frame.customAnchor ? { ...frame.customAnchor } : null\n    };`)
+    .replace(serializeNeedle, `          hold: frame.hold ?? 1,\n          customAnchor: frame.customAnchor ? { ...frame.customAnchor } : null,\n          png: frame.canvas.toDataURL('image/png')`)
+    .replace(deserializeNeedle, `          hold: Math.max(1, Number(frame.hold) || 1),\n          customAnchor: frame.customAnchor && Number.isFinite(frame.customAnchor.u) && Number.isFinite(frame.customAnchor.v)\n            ? { u: Number(frame.customAnchor.u), v: Number(frame.customAnchor.v) }\n            : null,\n          canvas: await canvasFromDataUrl(frame.png)`);
+  return code;
+}
+
 function exposeProjectBridge(extension) {
   const marker = '  void restoreAutosave();\n})();';
   if (!extension.includes(marker)) throw new Error('Project System runtime marker was not found.');
@@ -96,9 +114,10 @@ function exposeRigBridge(rigging) {
 
 async function boot() {
   const sourceUrl = new URL('./main-v2.ts', import.meta.url);
-  const [source, extension, engineExports, apngExport, asepriteExport, aiFixer, uxTools, performanceTools, performanceGuards, rigging, skeletalAnimation, mesh, ik] = await Promise.all([
+  const [source, extension, customAnchor, engineExports, apngExport, asepriteExport, aiFixer, uxTools, performanceTools, performanceGuards, rigging, skeletalAnimation, mesh, ik] = await Promise.all([
     fetchText(sourceUrl, 'editor source'),
     fetchText(extensionUrl, 'project system'),
+    fetchText(customAnchorUrl, 'custom anchor tools'),
     fetchText(engineExportsUrl, 'engine exporters'),
     fetchText(apngExportUrl, 'APNG exporter'),
     fetchText(asepriteExportUrl, 'Aseprite exporter'),
@@ -112,7 +131,8 @@ async function boot() {
     fetchText(ikUrl, 'inverse kinematics')
   ]);
 
-  const js = `${stripMainTypeScript(source)}\n\n${exposeProjectBridge(extension)}\n\n${engineExports}\n\n${apngExport}\n\n${asepriteExport}\n\n${aiFixer}\n\n${uxTools}\n\n${performanceTools}\n\n${performanceGuards}\n\n${exposeRigBridge(rigging)}\n\n${skeletalAnimation}\n\n${mesh}\n\n${ik}`;
+  const projectExtension = exposeProjectBridge(patchProjectExtension(extension));
+  const js = `${stripMainTypeScript(source)}\n\n${projectExtension}\n\n${customAnchor}\n\n${engineExports}\n\n${apngExport}\n\n${asepriteExport}\n\n${aiFixer}\n\n${uxTools}\n\n${performanceTools}\n\n${performanceGuards}\n\n${exposeRigBridge(rigging)}\n\n${skeletalAnimation}\n\n${mesh}\n\n${ik}`;
 
   const blobUrl = URL.createObjectURL(new Blob([`${js}\n//# sourceURL=sprite-sheet-studio-runtime.js`], { type: 'text/javascript' }));
   try {
