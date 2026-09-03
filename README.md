@@ -26,15 +26,19 @@
 - Automatic normalization to a shared canvas without cropping
 - Opaque-bounds and transparency diagnostics
 
-### Animation
+### Animation editor
 
 - Pixel-perfect animation preview
 - FPS control
 - Loop and ping-pong playback
+- **Per-frame hold multiplier** for longer or shorter poses
+- **Onion skin** for previous / next frame with adjustable opacity
 - Fit-to-preview control
 - Timeline frame selection and drag-to-reorder
 - Duplicate, delete and reverse frame tools
+- Flip X / Flip Y / Rotate 90° for the current frame
 - Keyboard navigation
+- Per-frame hold duration is respected by live playback and GIF export
 
 ### Export
 
@@ -68,7 +72,7 @@ Imported images are decoded and processed in the browser. Sprite assets are not 
 
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md) for advanced slicing, onion skin, frame timing, project files, engine exports, bone rigging, IK, mesh deformation and more.
+See [ROADMAP.md](./ROADMAP.md) for advanced slicing, project files, engine exports, bone rigging, IK, mesh deformation and more.
 
 ## Tech
 
