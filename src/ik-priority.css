@@ -1,0 +1,84 @@
+.ik-priority-panel { border-top: 1px solid #203249; }
+.ik-priority-controls {
+  display: grid;
+  grid-template-columns: auto minmax(0,1fr) auto;
+  gap: 6px;
+}
+.ik-priority-controls input {
+  min-width: 0;
+  height: 32px;
+  border: 1px solid #263b54;
+  border-radius: 7px;
+  background: #09131f;
+  color: #dce7f5;
+  padding: 0 8px;
+  text-align: center;
+  outline: none;
+}
+.ik-priority-controls input:focus {
+  border-color: #258ad0;
+  box-shadow: 0 0 0 2px rgba(37,138,208,.12);
+}
+.ik-priority-help,
+.ik-priority-conflicts {
+  margin-top: 7px;
+  padding: 7px 8px;
+  border: 1px solid #1f334a;
+  border-radius: 7px;
+  background: #09131f;
+  color: #7387a0;
+  font-size: 8px;
+  line-height: 1.45;
+}
+.ik-priority-conflicts.has-conflict {
+  border-color: #70572a;
+  background: #241d11;
+  color: #e7c87c;
+}
+.ik-priority-order {
+  display: grid;
+  gap: 5px;
+  margin-top: 7px;
+}
+.ik-priority-order-row {
+  min-height: 31px;
+  display: grid;
+  grid-template-columns: 22px minmax(0,1fr) auto;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #1e3148;
+  border-radius: 7px;
+  background: #0a1420;
+  color: #8ca0b9;
+  padding: 3px 7px;
+  text-align: left;
+  cursor: pointer;
+}
+.ik-priority-order-row:hover,
+.ik-priority-order-row.active {
+  border-color: #286597;
+  background: #10243a;
+}
+.ik-priority-order-row > span {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #15263a;
+  color: #6f91b6;
+  font-size: 8px;
+}
+.ik-priority-order-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #b9c8d9;
+  font-size: 8px;
+}
+.ik-priority-order-row em {
+  color: #6fd5bc;
+  font-style: normal;
+  font-size: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
