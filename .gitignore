@@ -4,3 +4,6 @@ dist/
 *.log
 .vscode/
 .idea/
+test-results/
+playwright-report/
+blob-report/
