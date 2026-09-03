@@ -1,0 +1,22 @@
+{
+  "name": "Sprite Sheet Studio",
+  "short_name": "SSS",
+  "description": "Local-first sprite sheet editor for slicing, cleanup, animation, rigging and game-ready export.",
+  "start_url": "../../",
+  "scope": "../../",
+  "display": "standalone",
+  "background_color": "#080d16",
+  "theme_color": "#0b1220",
+  "icons": [
+    {
+      "src": "./android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
