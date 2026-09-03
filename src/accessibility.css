@@ -1,0 +1,64 @@
+.sss-skip-link {
+  position: fixed;
+  left: 12px;
+  top: 12px;
+  z-index: 100000;
+  transform: translateY(-160%);
+  border: 1px solid #4aaeff;
+  border-radius: 8px;
+  background: #09111d;
+  color: #eaf5ff;
+  padding: 9px 12px;
+  font: 700 12px/1 system-ui, sans-serif;
+  text-decoration: none;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, .4);
+}
+
+.sss-skip-link:focus {
+  transform: translateY(0);
+}
+
+.sss-sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+:where(button, input, select, [tabindex], a):focus-visible {
+  outline: 2px solid #62c4ff;
+  outline-offset: 2px;
+}
+
+#sourceCanvas[tabindex],
+#previewCanvas[tabindex] {
+  border-radius: 5px;
+}
+
+.sss-a11y-help {
+  color: #7f94ad;
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+
+  .toast,
+  .skeletal-marker,
+  .rig-mode-badge {
+    animation: none !important;
+  }
+}
