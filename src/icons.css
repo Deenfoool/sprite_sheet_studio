@@ -1,0 +1,65 @@
+.btn.has-lucide-icon,
+.source-cell-action.has-lucide-icon,
+.cleanup-compare-close.has-lucide-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.btn .sss-btn-icon,
+.source-cell-action .sss-btn-icon,
+.cleanup-compare-close .sss-btn-icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  stroke-width: 2;
+}
+
+.export-btn.has-lucide-icon {
+  justify-content: flex-start;
+  position: relative;
+  padding-left: 38px;
+}
+
+.export-btn .sss-btn-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  transform: translateY(-50%);
+  color: #8dbde9;
+}
+
+.upload-icon .lucide {
+  width: 22px;
+  height: 22px;
+  stroke-width: 1.8;
+}
+
+.smart-action > .lucide,
+.smart-action > i .lucide {
+  width: 17px;
+  height: 17px;
+  color: #70dcbf;
+}
+
+.privacy-line .lucide {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  color: #70dcbf;
+  margin-top: 1px;
+}
+
+.top-actions .btn .lucide,
+.preview-actions .btn .lucide {
+  width: 14px;
+  height: 14px;
+}
+
+@media (max-width: 760px) {
+  .btn.has-lucide-icon { gap: 5px; }
+  .export-btn.has-lucide-icon { padding-left: 34px; }
+}
