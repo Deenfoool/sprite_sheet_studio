@@ -12,20 +12,36 @@ The project follows semantic-versioning intent while it is pre-1.0: minor versio
 - Cross-browser Playwright projects for Chromium, Firefox and WebKit.
 - Browser support / capability documentation.
 - **Multiple simultaneous IK chains** with separate targets, enable states, bend settings, constraints and joint locks.
+- Dedicated draggable IK pole targets.
+- IK stretch / unreachable-target mode with rest lengths and configurable maximum stretch.
 - Multi-chain IK persistence in local rig extras and full `.sss` projects.
-- Smoke coverage for multi-chain IK and IK project persistence.
+- AI Fixer duplicate-frame detection, broken-frame suspects and similarity heatmap.
+- **Track-oriented skeletal timeline** with bone/part property lanes, change-aware key markers, filters, zoom and click-to-scrub.
+- **Advanced mesh topology editor** with Delaunay retriangulation, manual triangle editing and vertex inspector.
+- Mesh influence pruning and multi-bone weight normalization UI.
+- Mesh topology / weights / bind-pose persistence inside full `.sss` projects and IndexedDB rig extras.
+- **Command Palette (`Ctrl/Cmd + K`)** with fuzzy search and context-aware commands.
+- **Named Guide Manager** with unlimited persistent X/Y guides.
+- **Custom Shortcut Editor** with user-defined local keyboard bindings.
+- Organized brand assets under `assets/brand` and app icons under `assets/icons`.
+- Lucide icons as progressive enhancement with text fallback.
+- Smoke coverage for branding, advanced IK, AI Fixer, mesh topology/persistence, skeletal tracks, Command Palette, Named Guides and Custom Shortcuts.
 
 ### Changed
 
-- Browser smoke tests now treat Animated WebP as a capability-dependent feature.
-- Runtime diagnostics include accessibility, easing-persistence and WebP capability checks.
-- Rigging roadmap now treats one global IK target as legacy behavior; the editor uses a chain manager instead.
+- Browser smoke tests treat Animated WebP as a capability-dependent feature.
+- Runtime diagnostics now cover accessibility, easing persistence, advanced IK, AI Fixer, skeletal tracks, mesh topology/persistence, professional UX modules and brand assets.
+- Rigging uses a multi-chain IK manager instead of one global IK target.
+- Full `.sss` extras format advanced to version 3 to include mesh data.
+- Repository root no longer contains loose logo/favicon files; assets are grouped by purpose.
 
 ### Pending
 
 - Replace the Pages runtime TypeScript stripping path with a verified committed production bundle.
-- Execute and record the full three-engine browser matrix for a release candidate.
-- Add dedicated IK pole targets and stretch/unreachable-target modes.
+- Execute and record the full Chromium / Firefox / WebKit browser matrix for a release candidate.
+- Add better rig/game-engine skeletal export.
+- Add WebGL/PixiJS rendering for heavy meshes.
+- Add better touch/tablet editing.
 - License decision before stable public release.
 
 ## [0.4.0-dev.1] - 2026-09-03
@@ -99,6 +115,5 @@ The project follows semantic-versioning intent while it is pre-1.0: minor versio
 ### Known technical debt
 
 - The published Pages fallback still performs local runtime transformation of `main-v2.ts`.
-- Track-oriented skeletal property lanes are not implemented yet.
-- Dedicated IK pole targets / stretch behavior are not implemented yet.
-- Mesh editing remains an MVP Canvas-oriented workflow.
+- WebGL/PixiJS mesh rendering is not implemented yet.
+- GitHub Actions are not currently producing workflow runs in this repository.
