@@ -161,7 +161,7 @@ test('Animated WebP muxer produces RIFF animation when Canvas WebP encoding is s
   }
 });
 
-test('custom anchors, skeletal easing and IK persist in a full SSS project', async ({ page }) => {
+test('custom anchors, skeletal easing and advanced IK persist in a full SSS project', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Try demo' }).click();
 
@@ -186,6 +186,13 @@ test('custom anchors, skeletal easing and IK persist in a full SSS project', asy
   await page.locator('#rigAddBone').click();
   await page.locator('#ikAddChain').click();
   await expect(page.locator('#ikChainSelect option')).toHaveCount(1);
+  await expect(page.locator('#ikPoleEnabled')).toBeVisible();
+  await page.locator('#ikPoleEnabled').check();
+  await page.locator('#ikResetPole').click();
+  await expect(page.locator('#ikStretchEnabled')).toBeVisible();
+  await page.locator('#ikStretchEnabled').check();
+  await page.locator('#ikMaxStretch').fill('1.8');
+  await page.locator('#ikMaxStretch').blur();
   await page.getByRole('button', { name: /Back to animator/i }).click();
 
   const projectDownload = page.waitForEvent('download');
@@ -202,13 +209,18 @@ test('custom anchors, skeletal easing and IK persist in a full SSS project', asy
     expect(saved.skeletal).toBeTruthy();
     expect(saved.ik).toBeTruthy();
     expect(saved.ik.chains).toHaveLength(1);
+    expect(saved.ik.chains[0].poleEnabled).toBe(true);
+    expect(Number.isFinite(saved.ik.chains[0].poleX)).toBe(true);
+    expect(Number.isFinite(saved.ik.chains[0].poleY)).toBe(true);
+    expect(saved.ik.chains[0].stretchEnabled).toBe(true);
+    expect(saved.ik.chains[0].maxStretch).toBeCloseTo(1.8, 5);
     expect(saved.animations.idle.frames[0].customAnchor).toBeTruthy();
     expect(saved.skeletal.easingExtensions?.idle?.interpolation).toBe('bezier');
     expect(saved.skeletal.easingExtensions?.idle?.curve).toEqual([0.2, 0.1, 0.7, 0.9]);
   }
 });
 
-test('rigging supports multiple simultaneous IK chains', async ({ page }) => {
+test('rigging supports multiple simultaneous IK chains with pole and stretch controls', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: /Rigging/i }).click();
 
@@ -217,6 +229,8 @@ test('rigging supports multiple simultaneous IK chains', async ({ page }) => {
   await expect(page.locator('#ikLockA')).toBeVisible();
   await expect(page.locator('#ikLockB')).toBeVisible();
   await expect(page.locator('#ikChainSelect')).toBeVisible();
+  await expect(page.locator('#ikPoleEnabled')).toBeVisible();
+  await expect(page.locator('#ikStretchEnabled')).toBeVisible();
   await expect(page.getByRole('button', { name: /Load parts/i })).toBeVisible();
   await expect(page.locator('#rigPartScaleX')).toBeAttached();
   await expect(page.locator('#rigPartScaleY')).toBeAttached();
