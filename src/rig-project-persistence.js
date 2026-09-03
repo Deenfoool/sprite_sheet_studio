@@ -2,6 +2,13 @@
   const rigApi = globalThis.__SSSRig;
   if (!rigApi) return;
 
+  const DB_NAME = 'sprite-sheet-studio';
+  const DB_VERSION = 1;
+  const STORE_NAME = 'projects';
+  const EXTRAS_KEY = 'last-project-rig-extras';
+  let extrasTimer = 0;
+  let restoringExtras = false;
+
   function bitmapDataUrl(part) {
     if (part.dataUrl) return part.dataUrl;
     const bitmap = part.bitmap;
@@ -42,6 +49,15 @@
         visible: part.visible,
         image: bitmapDataUrl(part)
       }))
+    };
+  }
+
+  function serializeExtras() {
+    return {
+      version: 1,
+      rigging: serialize(),
+      skeletal: globalThis.__SSSSkeletal?.serialize?.() ?? null,
+      savedAt: new Date().toISOString()
     };
   }
 
@@ -97,6 +113,17 @@
     rigApi.draw();
   }
 
+  async function restoreExtras(extras) {
+    if (!extras || extras.version !== 1) return;
+    restoringExtras = true;
+    try {
+      if (extras.rigging) await restore(extras.rigging);
+      if (extras.skeletal) globalThis.__SSSSkeletal?.restore?.(extras.skeletal);
+    } finally {
+      restoringExtras = false;
+    }
+  }
+
   function reset() {
     const rig = rigApi.state;
     rig.parts.forEach((part) => part.bitmap?.close?.());
@@ -119,22 +146,196 @@
     rigApi.draw();
   }
 
-  function scheduleProjectSave() {
+  function openDb() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error('IndexedDB failed to open'));
+    });
+  }
+
+  async function putExtras(value) {
+    const db = await openDb();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      tx.objectStore(STORE_NAME).put(value, EXTRAS_KEY);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error || new Error('Rig autosave failed'));
+    });
+    db.close();
+  }
+
+  async function getExtras() {
+    const db = await openDb();
+    const result = await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const request = tx.objectStore(STORE_NAME).get(EXTRAS_KEY);
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => reject(request.error || new Error('Rig autosave read failed'));
+    });
+    db.close();
+    return result;
+  }
+
+  function scheduleExtrasSave() {
+    if (restoringExtras) return;
+    window.clearTimeout(extrasTimer);
+    extrasTimer = window.setTimeout(() => {
+      try {
+        void putExtras(serializeExtras()).catch((error) => console.error('[Sprite Sheet Studio] rig autosave failed', error));
+      } catch (error) {
+        console.error('[Sprite Sheet Studio] rig autosave serialization failed', error);
+      }
+    }, 550);
     globalThis.__SSSProject?.autosave?.();
   }
 
-  document.addEventListener('input', (event) => {
-    if (event.target instanceof Element && event.target.closest('.rig-overlay')) scheduleProjectSave();
-  });
-  document.addEventListener('change', (event) => {
-    if (event.target instanceof Element && event.target.closest('.rig-overlay')) scheduleProjectSave();
-  });
+  function downloadProject(data, filename) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  }
+
+  function projectFileName(data) {
+    const name = String(data?.name || 'sprite-project').replace(/[^a-z0-9_-]+/gi, '-').replace(/^-+|-+$/g, '') || 'sprite-project';
+    return `${name}.sss`;
+  }
+
   document.addEventListener('click', (event) => {
-    if (event.target instanceof Element && event.target.closest('.rig-overlay button')) setTimeout(scheduleProjectSave, 0);
+    const button = event.target instanceof Element ? event.target.closest('button') : null;
+    if (!button) return;
+
+    if (button.closest('.top-actions') && button.textContent?.trim() === 'Save .sss') {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      try {
+        const data = globalThis.__SSSProject?.serialized?.();
+        if (!data) throw new Error('Project serializer is unavailable.');
+        const extras = serializeExtras();
+        data.rigging = extras.rigging;
+        data.skeletal = extras.skeletal;
+        data.projectFormat = 'sss-full-project';
+        downloadProject(data, projectFileName(data));
+        void putExtras(extras);
+      } catch (error) {
+        console.error(error);
+        window.alert(`Could not save full .sss project: ${error instanceof Error ? error.message : String(error)}`);
+      }
+      return;
+    }
+
+    if (button.closest('.top-actions') && button.textContent?.trim() === 'New') {
+      setTimeout(() => {
+        reset();
+        globalThis.__SSSSkeletal?.reset?.();
+        scheduleExtrasSave();
+      }, 0);
+      return;
+    }
+
+    if (button.closest('.rig-overlay')) setTimeout(scheduleExtrasSave, 0);
+  }, true);
+
+  document.addEventListener('change', (event) => {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement)) return;
+
+    if (input.matches('.project-file-input')) {
+      if (input.dataset.sssExtrasBypass === '1') {
+        delete input.dataset.sssExtrasBypass;
+        return;
+      }
+
+      const file = input.files?.[0];
+      if (!file) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+
+      void (async () => {
+        try {
+          const data = JSON.parse(await file.text());
+          const extras = {
+            version: 1,
+            rigging: data.rigging || data.extensions?.rigging || null,
+            skeletal: data.skeletal || data.extensions?.skeletal || null
+          };
+
+          const status = document.querySelector('.project-status');
+          let restored = false;
+          const finish = async () => {
+            if (restored) return;
+            restored = true;
+            await restoreExtras(extras);
+            await putExtras(serializeExtras());
+          };
+
+          let observer = null;
+          if (status) {
+            observer = new MutationObserver(() => {
+              if (!/imported/i.test(status.textContent || '')) return;
+              observer?.disconnect();
+              void finish();
+            });
+            observer.observe(status, { childList: true, subtree: true, characterData: true });
+          }
+
+          input.dataset.sssExtrasBypass = '1';
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          setTimeout(() => {
+            observer?.disconnect();
+            void finish();
+          }, 2500);
+        } catch (error) {
+          console.error('[Sprite Sheet Studio] extended .sss import failed', error);
+          input.dataset.sssExtrasBypass = '1';
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      })();
+      return;
+    }
+
+    if (input.closest('.rig-overlay')) scheduleExtrasSave();
+  }, true);
+
+  document.addEventListener('input', (event) => {
+    if (event.target instanceof Element && event.target.closest('.rig-overlay')) scheduleExtrasSave();
   });
   document.addEventListener('pointerup', (event) => {
-    if (event.target instanceof Element && event.target.closest('.rig-overlay')) scheduleProjectSave();
+    if (event.target instanceof Element && event.target.closest('.rig-overlay')) scheduleExtrasSave();
   });
 
-  globalThis.__SSSRigPersistence = { serialize, restore, reset };
+  async function restoreAutosavedExtrasWhenReady() {
+    const saved = await getExtras().catch(() => null);
+    if (!saved) return;
+
+    const status = document.querySelector('.project-status');
+    if (!status || /restored|autosave on|autosaved/i.test(status.textContent || '')) {
+      await restoreExtras(saved);
+      return;
+    }
+
+    const observer = new MutationObserver(() => {
+      if (!/restored|autosave on|autosaved/i.test(status.textContent || '')) return;
+      observer.disconnect();
+      void restoreExtras(saved);
+    });
+    observer.observe(status, { childList: true, subtree: true, characterData: true });
+    setTimeout(() => {
+      observer.disconnect();
+      if (!restoringExtras) void restoreExtras(saved);
+    }, 2500);
+  }
+
+  globalThis.__SSSRigPersistence = { serialize, restore, reset, serializeExtras, restoreExtras };
+  void restoreAutosavedExtrasWhenReady();
 })();
