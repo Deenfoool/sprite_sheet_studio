@@ -17,13 +17,38 @@
     <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/apple-touch-icon.png" />
     <link rel="manifest" href="./assets/icons/site.webmanifest" />
 
-    <link rel="stylesheet" href="./src/styles.css?v=20260904-stable3" />
-    <link rel="stylesheet" href="./src/smart-tools.css?v=20260904-stable3" />
-    <link rel="stylesheet" href="./src/brand.css?v=20260904-stable3" />
+    <link rel="stylesheet" href="./src/styles.css?v=20260904-stable4" />
+    <link rel="stylesheet" href="./src/smart-tools.css?v=20260904-stable4" />
+    <link rel="stylesheet" href="./src/brand.css?v=20260904-stable4" />
     <title>Sprite Sheet Studio</title>
+    <style>
+      .sss-boot{min-height:100vh;display:grid;place-items:center;background:#080d16;color:#e8edf6;font:14px system-ui;padding:24px;box-sizing:border-box}.sss-boot-card{width:min(520px,100%);padding:24px;border:1px solid #213149;border-radius:16px;background:#0e1624;text-align:center}.sss-boot img{width:150px;max-width:50%;height:auto}.sss-boot p{color:#9cadc3;line-height:1.5}.sss-boot pre{display:none;text-align:left;white-space:pre-wrap;word-break:break-word;background:#080d16;color:#ff9bad;border:1px solid #3b2631;padding:12px;border-radius:9px}
+    </style>
   </head>
   <body>
-    <div id="app"></div>
-    <script type="module" src="./src/app-stable.js?v=20260904-stable3"></script>
+    <div id="app">
+      <main class="sss-boot" id="sssBoot">
+        <div class="sss-boot-card">
+          <img src="./assets/brand/logo-full.png" alt="Sprite Sheet Studio" />
+          <p id="sssBootStatus">Starting stable editor…</p>
+          <pre id="sssBootError"></pre>
+        </div>
+      </main>
+    </div>
+    <script>
+      (() => {
+        let lastError = '';
+        window.addEventListener('error', (event) => { lastError = event.error?.stack || event.message || String(event.error || 'Unknown startup error'); });
+        window.addEventListener('unhandledrejection', (event) => { lastError = event.reason?.stack || event.reason?.message || String(event.reason || 'Unhandled startup rejection'); });
+        window.setTimeout(() => {
+          if (document.documentElement.dataset.sssReady === 'stable') return;
+          const status = document.querySelector('#sssBootStatus');
+          const error = document.querySelector('#sssBootError');
+          if (status) status.textContent = 'The stable editor did not finish starting.';
+          if (error) { error.style.display = 'block'; error.textContent = lastError || 'app-stable.js did not report ready state. Reload once; if this remains visible, send this message.'; }
+        }, 4000);
+      })();
+    </script>
+    <script type="module" src="./src/app-stable.js?v=20260904-stable4"></script>
   </body>
 </html>
