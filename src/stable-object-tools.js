@@ -82,6 +82,13 @@ async function detectComponents(canvas, options) {
     return colorDistance(data[p], data[p + 1], data[p + 2], data[p + 3], bg) > tolerance;
   };
 
+  const pushIfForeground = (next, topRef) => {
+    if (visited[next]) return topRef;
+    visited[next] = 1;
+    if (foreground(next)) stack[topRef++] = next;
+    return topRef;
+  };
+
   for (let start = 0; start < pixels; start += 1) {
     if (visited[start]) continue;
     visited[start] = 1;
@@ -100,21 +107,15 @@ async function detectComponents(canvas, options) {
       if (x < minX) minX = x; if (x > maxX) maxX = x;
       if (y < minY) minY = y; if (y > maxY) maxY = y;
 
-      const neighbors = [];
-      if (x > 0) neighbors.push(index - 1);
-      if (x + 1 < width) neighbors.push(index + 1);
-      if (y > 0) neighbors.push(index - width);
-      if (y + 1 < height) neighbors.push(index + width);
-      for (const next of neighbors) {
-        if (visited[next]) continue;
-        visited[next] = 1;
-        if (foreground(next)) stack[top++] = next;
-      }
+      if (x > 0) top = pushIfForeground(index - 1, top);
+      if (x + 1 < width) top = pushIfForeground(index + 1, top);
+      if (y > 0) top = pushIfForeground(index - width, top);
+      if (y + 1 < height) top = pushIfForeground(index + width, top);
     }
 
     if (area >= minArea) boxes.push({ minX, minY, maxX, maxY, area });
     if (boxes.length > MAX_COMPONENTS) throw new Error(`More than ${MAX_COMPONENTS} objects detected. Increase minimum area or background tolerance.`);
-    if (boxes.length % 24 === 0) await new Promise((resolve) => setTimeout(resolve, 0));
+    if (boxes.length && boxes.length % 24 === 0) await new Promise((resolve) => setTimeout(resolve, 0));
   }
 
   return mergeBoxes(boxes, options.mergeGap).sort((a, b) => {
