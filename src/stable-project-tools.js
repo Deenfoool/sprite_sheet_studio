@@ -77,15 +77,25 @@ function syncActiveClip() {
   if (clip) animations.set(activeAnimation, clip);
 }
 
+function runtimeExtrasSnapshot() {
+  return {
+    rig: globalThis.__SSSStableRig?.serialize?.() ?? null,
+    skeletal: globalThis.__SSSStableSkeletal?.serialize?.() ?? null,
+    ik: globalThis.__SSSStableIK?.serialize?.() ?? null,
+    mesh: globalThis.__SSSStableMesh?.serialize?.() ?? null
+  };
+}
+
 function projectSnapshot() {
   syncActiveClip();
   return {
-    version: 2,
+    version: 3,
     app: 'Sprite Sheet Studio',
     runtime: 'stable-lazy',
     activeAnimation,
     savedAt: new Date().toISOString(),
-    animations: Object.fromEntries([...animations.entries()].map(([name, clip]) => [name, clip]))
+    animations: Object.fromEntries([...animations.entries()].map(([name, clip]) => [name, clip])),
+    extras: runtimeExtrasSnapshot()
   };
 }
 
@@ -147,6 +157,40 @@ async function restoreClip(clip) {
   } finally {
     restoring = false;
   }
+}
+
+async function restoreExtras(extras) {
+  if (!extras || typeof extras !== 'object') return;
+  let openedRig = false;
+  if (extras.rig) {
+    setStatus('Restoring rig…');
+    const module = await import('./stable-rig-lazy.js?v=20260904-lazy4');
+    await module.open();
+    await globalThis.__SSSStableRig?.restore?.(extras.rig);
+    openedRig = true;
+  }
+  if (extras.skeletal) {
+    setStatus('Restoring skeletal animations…');
+    const module = await import('./stable-skeletal-lazy.js?v=20260904-lazy4');
+    await module.open();
+    globalThis.__SSSStableSkeletal?.restore?.(extras.skeletal);
+    openedRig = true;
+  }
+  if (extras.ik) {
+    setStatus('Restoring IK…');
+    const module = await import('./stable-ik-lazy.js?v=20260904-lazy4');
+    await module.open();
+    globalThis.__SSSStableIK?.restore?.(extras.ik);
+    openedRig = true;
+  }
+  if (extras.mesh) {
+    setStatus('Restoring mesh…');
+    const module = await import('./stable-mesh-lazy.js?v=20260904-lazy4');
+    await module.open();
+    globalThis.__SSSStableMesh?.restore?.(extras.mesh);
+    openedRig = true;
+  }
+  if (openedRig) globalThis.__SSSStableRig?.close?.();
 }
 
 function uniqueName(raw) {
@@ -304,7 +348,8 @@ function saveProject() {
     const project = projectSnapshot();
     const blob = new Blob([JSON.stringify(project)], { type: 'application/json' });
     downloadBlob(blob, 'sprite-sheet-studio.sss');
-    setStatus(`Saved ${(blob.size / 1024 / 1024).toFixed(1)} MB project`, 'ok');
+    const extras = Object.values(project.extras || {}).filter(Boolean).length;
+    setStatus(`Saved ${(blob.size / 1024 / 1024).toFixed(1)} MB · ${extras} advanced workspace${extras === 1 ? '' : 's'}`, 'ok');
   } catch (error) {
     console.error(error);
     setStatus(error instanceof Error ? error.message : 'Project save failed', 'error');
@@ -322,6 +367,7 @@ async function loadProjectFile(file) {
   activeAnimation = animations.has(data.activeAnimation) ? data.activeAnimation : animations.keys().next().value;
   restoring = false;
   await restoreClip(animations.get(activeAnimation));
+  await restoreExtras(data.extras);
   renderAnimationUi();
   resetHistory();
   setStatus('Project loaded', 'ok');
@@ -368,7 +414,7 @@ function createPanel() {
       <button class="btn danger" id="stableDeleteAnimation">Delete</button>
     </div>
     <div class="sss-module-row"><span>Project status</span><strong data-project-status>Ready</strong></div>
-    <div class="muted" style="margin-top:10px">Undo keeps up to ${HISTORY_LIMIT} checkpoints and pauses automatically for large frame sets to protect memory.</div>`;
+    <div class="muted" style="margin-top:10px">Undo keeps up to ${HISTORY_LIMIT} checkpoints and pauses automatically for large frame sets to protect memory. Advanced Rig/Skeletal/IK/Mesh state is included only when those workspaces have been opened.</div>`;
   document.body.append(panel);
 
   $('[data-project-close]', panel)?.addEventListener('click', () => panel.hidden = true);
