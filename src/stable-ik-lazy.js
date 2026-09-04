@@ -3,6 +3,7 @@ let panel = null;
 let targetCanvas = null;
 let activeChainId = null;
 let draggingChainId = null;
+let editTargets = true;
 const chains = [];
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -13,7 +14,7 @@ const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 async function ensureRig() {
   if (!globalThis.__SSSStableRig) {
-    const module = await import('./stable-rig-lazy.js?v=20260904-lazy1');
+    const module = await import('./stable-rig-lazy.js?v=20260904-lazy4');
     await module.open();
   }
   return globalThis.__SSSStableRig;
@@ -56,7 +57,6 @@ function chainLabel(chain) {
 }
 
 function activeChain() { return chains.find((chain) => chain.id === activeChainId) || null; }
-
 function validEndBones() { return rig().state.bones.filter((bone) => bone.parentId && boneById(bone.parentId)); }
 
 function createChain(endBoneId) {
@@ -78,7 +78,6 @@ function solveChain(chain) {
   const end = boneById(chain.endBoneId);
   const start = end?.parentId ? boneById(end.parentId) : null;
   if (!end || !start) return;
-
   if (!Number.isFinite(chain.restStartLength)) chain.restStartLength = start.length;
   if (!Number.isFinite(chain.restEndLength)) chain.restEndLength = end.length;
   let l1 = Math.max(1, chain.restStartLength);
@@ -113,16 +112,13 @@ function solveChain(chain) {
   const startWorldAngle = Math.atan2(elbowY - p0.y, elbowX - p0.x);
   const endWorldAngle = Math.atan2(ty - elbowY, tx - elbowX);
   const parentWorld = start.parentId ? worldBone(boneById(start.parentId)) : null;
-
   if (!chain.lockStart) start.rotation = deg(startWorldAngle - (parentWorld?.rotation || 0));
   if (!chain.lockEnd) end.rotation = deg(endWorldAngle - startWorldAngle);
 }
 
 function solveAll() {
   [...chains].sort((a, b) => (a.priority || 0) - (b.priority || 0)).forEach(solveChain);
-  rig().draw();
-  drawTargets();
-  renderUi();
+  rig().draw(); drawTargets(); renderUi();
 }
 
 function drawTargets() {
@@ -141,6 +137,14 @@ function drawTargets() {
   });
 }
 
+function updateTargetInputMode() {
+  if (!targetCanvas) return;
+  targetCanvas.style.pointerEvents = editTargets ? 'auto' : 'none';
+  targetCanvas.style.cursor = editTargets ? 'crosshair' : 'default';
+  const button = $('#stableIkEditTargets', panel);
+  if (button) button.textContent = editTargets ? 'Editing targets' : 'Pass through to rig';
+}
+
 function canvasPoint(event) {
   const rect = targetCanvas.getBoundingClientRect();
   return { x: (event.clientX - rect.left) * (targetCanvas.width / rect.width), y: (event.clientY - rect.top) * (targetCanvas.height / rect.height) };
@@ -156,6 +160,7 @@ function findTarget(point) {
 }
 
 function pointerDown(event) {
+  if (!editTargets) return;
   const point = canvasPoint(event);
   const found = findTarget(point) || activeChain();
   if (!found) return;
@@ -165,11 +170,10 @@ function pointerDown(event) {
 }
 
 function pointerMove(event) {
-  if (!draggingChainId) return;
+  if (!editTargets || !draggingChainId) return;
   const chain = chains.find((item) => item.id === draggingChainId); if (!chain) return;
   const point = canvasPoint(event); chain.targetX = point.x; chain.targetY = point.y; solveAll();
 }
-
 function pointerUp() { draggingChainId = null; }
 
 function renderUi() {
@@ -188,6 +192,7 @@ function renderUi() {
   const chain = activeChain();
   const controls = ['stableIkEnd','stableIkEnabled','stableIkBend','stableIkTargetX','stableIkTargetY','stableIkLockStart','stableIkLockEnd','stableIkStretch','stableIkMaxStretch','stableIkPriority','stableIkDelete'];
   controls.forEach((id) => { const node = $(`#${id}`, panel); if (node) node.disabled = !chain; });
+  updateTargetInputMode();
   if (!chain) return;
   endSelect.value = chain.endBoneId;
   $('#stableIkEnabled', panel).checked = chain.enabled !== false;
@@ -235,12 +240,13 @@ function deleteChain() {
 }
 
 function serialize() {
-  return { version: 2, activeChainId, chains: chains.map((chain) => ({ ...chain })) };
+  return { version: 3, activeChainId, editTargets, chains: chains.map((chain) => ({ ...chain })) };
 }
 
 function restore(data) {
   chains.splice(0, chains.length, ...(data?.chains || []).map((chain) => ({ ...chain })));
   activeChainId = chains.some((chain) => chain.id === data?.activeChainId) ? data.activeChainId : chains[0]?.id || null;
+  editTargets = data?.editTargets !== false;
   renderUi(); solveAll();
 }
 
@@ -253,6 +259,8 @@ function createUi() {
   panel = document.createElement('section'); panel.className = 'rig-section'; panel.dataset.stableIkPanel = '1';
   panel.innerHTML = `
     <div class="rig-section-head"><span class="rig-section-title">Inverse Kinematics</span><span class="rig-mode-badge">LAZY IK</span></div>
+    <button class="btn" id="stableIkEditTargets" style="width:100%;margin-bottom:8px">Editing targets</button>
+    <div class="rig-empty">Switch to “Pass through to rig” when you want to drag bones instead of IK targets.</div>
     <div class="rig-field"><label>Chain</label><select id="stableIkChain"></select></div>
     <div class="rig-two"><button class="btn" id="stableIkAdd">+ Chain</button><button class="btn rig-danger" id="stableIkDelete">Delete</button></div>
     <div class="rig-field"><label>Two-bone end</label><select id="stableIkEnd"></select></div>
@@ -267,24 +275,26 @@ function createUi() {
   inspector.append(panel);
 
   targetCanvas = document.createElement('canvas'); targetCanvas.width = rigCanvas.width; targetCanvas.height = rigCanvas.height;
-  targetCanvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;z-index:5;cursor:crosshair;touch-action:none';
+  targetCanvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;z-index:5;touch-action:none';
   wrap.append(targetCanvas);
   targetCanvas.addEventListener('pointerdown', pointerDown); targetCanvas.addEventListener('pointermove', pointerMove); targetCanvas.addEventListener('pointerup', pointerUp); targetCanvas.addEventListener('pointercancel', pointerUp);
 
+  $('#stableIkEditTargets', panel).addEventListener('click', () => { editTargets = !editTargets; draggingChainId = null; updateTargetInputMode(); });
   $('#stableIkAdd', panel).addEventListener('click', addChain); $('#stableIkDelete', panel).addEventListener('click', deleteChain); $('#stableIkSolve', panel).addEventListener('click', syncActiveFromControls);
   $('#stableIkChain', panel).addEventListener('change', (event) => { activeChainId = event.target.value; renderUi(); drawTargets(); });
   ['stableIkEnd','stableIkEnabled','stableIkBend','stableIkTargetX','stableIkTargetY','stableIkLockStart','stableIkLockEnd','stableIkStretch','stableIkMaxStretch','stableIkPriority'].forEach((id) => $(`#${id}`, panel).addEventListener('change', syncActiveFromControls));
+  updateTargetInputMode();
 }
 
 export async function open() {
   await ensureRig();
   if (!initialized) {
     initialized = true; createUi();
-    globalThis.__SSSStableIK = { chains, serialize, restore, solve: solveAll, drawTargets };
+    globalThis.__SSSStableIK = { chains, serialize, restore, solve: solveAll, drawTargets, setEditTargets: (value) => { editTargets = Boolean(value); updateTargetInputMode(); } };
   }
   document.querySelector('.rig-overlay')?.classList.remove('hidden');
   rig().state.open = true;
   panel.hidden = false; targetCanvas.hidden = false;
   if (!chains.length && validEndBones().length) createChain(validEndBones()[0].id);
-  renderUi(); solveAll();
+  updateTargetInputMode(); renderUi(); solveAll();
 }
