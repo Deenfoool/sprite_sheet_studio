@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0b1220" />
-    <meta name="description" content="Sprite Sheet Studio — slice, align, animate and export game-ready sprite sheets directly in your browser." />
+    <meta name="description" content="Sprite Sheet Studio — slice, animate and export sprite sheets directly in your browser." />
     <meta property="og:title" content="Sprite Sheet Studio" />
-    <meta property="og:description" content="Local-first sprite sheet editor for slicing, cleanup, animation, rigging and game-ready export." />
+    <meta property="og:description" content="Local-first sprite sheet editor." />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://deenfoool.github.io/sprite_sheet_studio/assets/brand/logo-full-large.png" />
 
@@ -17,16 +17,13 @@
     <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/apple-touch-icon.png" />
     <link rel="manifest" href="./assets/icons/site.webmanifest" />
 
-    <link rel="stylesheet" href="./src/styles.css" />
-    <link rel="stylesheet" href="./src/smart-tools.css" />
-    <link rel="stylesheet" href="./src/brand.css" />
+    <link rel="stylesheet" href="./src/styles.css?v=20260904-stable3" />
+    <link rel="stylesheet" href="./src/smart-tools.css?v=20260904-stable3" />
+    <link rel="stylesheet" href="./src/brand.css?v=20260904-stable3" />
     <title>Sprite Sheet Studio</title>
   </head>
   <body>
     <div id="app"></div>
-    <!-- Recovery build: only the core animator is allowed to execute at startup.
-         Advanced modules are intentionally quarantined until their startup loops
-         are converted to explicit lazy loading. -->
-    <script type="module" src="./src/page-loader-safe.js?v=20260904-safe2"></script>
+    <script type="module" src="./src/app-stable.js?v=20260904-stable3"></script>
   </body>
 </html>
