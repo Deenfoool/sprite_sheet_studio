@@ -17,65 +17,16 @@
     <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/apple-touch-icon.png" />
     <link rel="manifest" href="./assets/icons/site.webmanifest" />
 
-    <link rel="preconnect" href="https://unpkg.com" crossorigin />
-
     <link rel="stylesheet" href="./src/styles.css" />
-    <link rel="stylesheet" href="./src/brand.css" />
-    <link rel="stylesheet" href="./src/icons.css" />
-    <link rel="stylesheet" href="./src/command-palette.css" />
-    <link rel="stylesheet" href="./src/custom-shortcuts.css" />
     <link rel="stylesheet" href="./src/smart-tools.css" />
-    <link rel="stylesheet" href="./src/editor-extensions.css" />
-    <link rel="stylesheet" href="./src/custom-anchor.css" />
-    <link rel="stylesheet" href="./src/custom-preview.css" />
-    <link rel="stylesheet" href="./src/source-cell-selection.css" />
-    <link rel="stylesheet" href="./src/cleanup-compare.css" />
-    <link rel="stylesheet" href="./src/onion-stack.css" />
-    <link rel="stylesheet" href="./src/object-slicer.css" />
-    <link rel="stylesheet" href="./src/ai-fixer.css" />
-    <link rel="stylesheet" href="./src/ux-tools.css" />
-    <link rel="stylesheet" href="./src/named-guides.css" />
-    <link rel="stylesheet" href="./src/rigging.css" />
-    <link rel="stylesheet" href="./src/skeletal-animation.css" />
-    <link rel="stylesheet" href="./src/skeletal-tracks.css" />
-    <link rel="stylesheet" href="./src/mesh.css" />
-    <link rel="stylesheet" href="./src/mesh-topology.css" />
-    <link rel="stylesheet" href="./src/ik.css" />
-    <link rel="stylesheet" href="./src/ik-pole.css" />
-    <link rel="stylesheet" href="./src/ik-stretch.css" />
-    <link rel="stylesheet" href="./src/ik-priority.css" />
-    <link rel="stylesheet" href="./src/diagnostics.css" />
-    <link rel="stylesheet" href="./src/accessibility.css" />
-    <link rel="stylesheet" href="./src/touch-tools.css" />
-
-    <script defer src="https://unpkg.com/lucide@1.33.0/dist/umd/lucide.min.js"></script>
+    <link rel="stylesheet" href="./src/brand.css" />
     <title>Sprite Sheet Studio</title>
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="./src/page-loader.js?v=20260904-freeze1"></script>
-    <script type="module" src="./src/brand.js"></script>
-    <script type="module" src="./src/icons.js?v=20260904-freeze1"></script>
-    <script type="module" src="./src/command-palette.js"></script>
-    <script type="module" src="./src/custom-shortcuts.js"></script>
-    <script type="module" src="./src/custom-preview.js"></script>
-    <script type="module" src="./src/source-cell-selection.js"></script>
-    <script type="module" src="./src/cleanup-compare.js"></script>
-    <script type="module" src="./src/onion-stack.js"></script>
-    <script type="module" src="./src/smart-trim-current.js"></script>
-    <script type="module" src="./src/object-slicer.js"></script>
-    <script type="module" src="./src/animated-webp.js"></script>
-    <script type="module" src="./src/unity-package.js"></script>
-    <script type="module" src="./src/named-guides.js"></script>
-    <script type="module" src="./src/skeletal-easing-persistence.js"></script>
-    <script type="module" src="./src/skeletal-tracks.js"></script>
-    <script type="module" src="./src/mesh-topology.js"></script>
-    <script type="module" src="./src/rig-engine-export.js"></script>
-    <script type="module" src="./src/ik-pole.js"></script>
-    <script type="module" src="./src/ik-stretch.js"></script>
-    <script type="module" src="./src/ik-priority.js"></script>
-    <script type="module" src="./src/diagnostics.js"></script>
-    <script type="module" src="./src/accessibility.js"></script>
-    <script type="module" src="./src/touch-tools.js"></script>
+    <!-- Recovery build: only the core animator is allowed to execute at startup.
+         Advanced modules are intentionally quarantined until their startup loops
+         are converted to explicit lazy loading. -->
+    <script type="module" src="./src/page-loader-safe.js?v=20260904-safe2"></script>
   </body>
 </html>
