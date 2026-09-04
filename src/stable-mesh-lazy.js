@@ -3,6 +3,7 @@ let panel = null;
 let meshCanvas = null;
 let originalRigDraw = null;
 let selectedVertex = -1;
+let selectedWeightBoneId = null;
 let activePartId = null;
 let previousPartVisibility = null;
 
@@ -21,10 +22,11 @@ const mesh = {
 const $ = (selector, root = document) => root.querySelector(selector);
 const rad = (degrees) => degrees * Math.PI / 180;
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+const cloneData = (value) => typeof structuredClone === 'function' ? structuredClone(value) : JSON.parse(JSON.stringify(value));
 
 async function ensureRig() {
   if (!globalThis.__SSSStableRig) {
-    const module = await import('./stable-rig-lazy.js?v=20260904-lazy1');
+    const module = await import('./stable-rig-lazy.js?v=20260904-lazy4');
     await module.open();
   }
   return globalThis.__SSSStableRig;
@@ -108,8 +110,10 @@ function generateGrid() {
   captureBind();
   autoWeights();
   selectedVertex = mesh.vertices.length ? 0 : -1;
+  selectedWeightBoneId = rig().state.bones[0]?.id || null;
   mesh.enabled = true;
   hideOriginalPart(true);
+  updatePointerMode();
   renderUi(); renderMesh();
 }
 
@@ -215,8 +219,8 @@ function selectCurrentPart() {
   const selected = rig().state.selectedPartId;
   if (!selected) throw new Error('Select a sprite part in the Rigging left panel first.');
   if (activePartId && activePartId !== selected) hideOriginalPart(false);
-  activePartId = selected; mesh.enabled = false; mesh.vertices = []; mesh.triangles = []; mesh.weights = []; mesh.bindBones = {}; mesh.bindPart = null; selectedVertex = -1; previousPartVisibility = null;
-  renderUi(); renderMesh();
+  activePartId = selected; mesh.enabled = false; mesh.vertices = []; mesh.triangles = []; mesh.weights = []; mesh.bindBones = {}; mesh.bindPart = null; selectedVertex = -1; selectedWeightBoneId = rig().state.bones[0]?.id || null; previousPartVisibility = null;
+  updatePointerMode(); renderUi(); renderMesh();
 }
 
 function canvasPoint(event) {
@@ -231,39 +235,47 @@ function pointerDown(event) {
   if (best >= 0) { selectedVertex = best; renderUi(); renderMesh(); }
 }
 
+function updatePointerMode() {
+  if (!meshCanvas) return;
+  meshCanvas.style.pointerEvents = mesh.enabled && mesh.showWire ? 'auto' : 'none';
+  meshCanvas.style.cursor = mesh.enabled && mesh.showWire ? 'crosshair' : 'default';
+}
+
 function renderUi() {
   if (!panel) return;
   const part = partById(activePartId);
   $('[data-mesh-part]', panel).textContent = part ? part.name : 'No part selected';
   $('#stableMeshCols', panel).value = String(mesh.cols); $('#stableMeshRows', panel).value = String(mesh.rows); $('#stableMeshWire', panel).checked = mesh.showWire;
   const vertexInfo = $('[data-mesh-vertex]', panel); vertexInfo.textContent = selectedVertex >= 0 ? `Vertex ${selectedVertex + 1} / ${mesh.vertices.length}` : 'No vertex selected';
-  const boneSelect = $('#stableMeshBone', panel); boneSelect.innerHTML = '';
+  const boneSelect = $('#stableMeshBone', panel);
+  const validIds = new Set(rig().state.bones.map((bone) => bone.id));
+  if (!selectedWeightBoneId || !validIds.has(selectedWeightBoneId)) selectedWeightBoneId = rig().state.bones[0]?.id || null;
+  boneSelect.innerHTML = '';
   rig().state.bones.forEach((bone) => { const option = document.createElement('option'); option.value = bone.id; option.textContent = bone.name; boneSelect.append(option); });
-  const boneId = boneSelect.value || rig().state.bones[0]?.id || '';
-  boneSelect.value = boneId;
-  const weight = selectedVertex >= 0 ? Number(mesh.weights[selectedVertex]?.[boneId] || 0) : 0;
+  boneSelect.value = selectedWeightBoneId || '';
+  const weight = selectedVertex >= 0 && selectedWeightBoneId ? Number(mesh.weights[selectedVertex]?.[selectedWeightBoneId] || 0) : 0;
   $('#stableMeshWeight', panel).value = String(Math.round(weight*1000)/1000);
   $('[data-mesh-counts]', panel).textContent = `${mesh.vertices.length} vertices · ${mesh.triangles.length} triangles`;
 }
 
 function updateWeight() {
   if (selectedVertex < 0) return;
-  const boneId = $('#stableMeshBone', panel).value; if (!boneId) return;
+  const boneId = selectedWeightBoneId || $('#stableMeshBone', panel).value; if (!boneId) return;
   const weight = clamp(Number($('#stableMeshWeight', panel).value) || 0,0,1);
   mesh.weights[selectedVertex] ||= {}; mesh.weights[selectedVertex][boneId] = weight; mesh.weights[selectedVertex] = normalizedWeights(mesh.weights[selectedVertex]);
   renderUi(); renderMesh();
 }
 
 function serialize() {
-  return { version: 1, activePartId, enabled: mesh.enabled, cols: mesh.cols, rows: mesh.rows, vertices: mesh.vertices, triangles: mesh.triangles, weights: mesh.weights, bindBones: mesh.bindBones, bindPart: mesh.bindPart, showWire: mesh.showWire };
+  return { version: 2, activePartId, selectedWeightBoneId, enabled: mesh.enabled, cols: mesh.cols, rows: mesh.rows, vertices: mesh.vertices, triangles: mesh.triangles, weights: mesh.weights, bindBones: mesh.bindBones, bindPart: mesh.bindPart, showWire: mesh.showWire };
 }
 
 function restore(data) {
   if (!data) return;
   if (activePartId && activePartId !== data.activePartId) hideOriginalPart(false);
-  activePartId = data.activePartId || null; mesh.enabled = Boolean(data.enabled); mesh.cols = Number(data.cols)||5; mesh.rows = Number(data.rows)||5;
-  mesh.vertices = (data.vertices||[]).map((v)=>({...v})); mesh.triangles = (data.triangles||[]).map((t)=>[...t]); mesh.weights = (data.weights||[]).map((w)=>({...w})); mesh.bindBones = structuredClone(data.bindBones||{}); mesh.bindPart = data.bindPart ? {...data.bindPart}:null; mesh.showWire = data.showWire !== false;
-  if (mesh.enabled) hideOriginalPart(true); renderUi(); renderMesh();
+  activePartId = data.activePartId || null; selectedWeightBoneId = data.selectedWeightBoneId || null; mesh.enabled = Boolean(data.enabled); mesh.cols = Number(data.cols)||5; mesh.rows = Number(data.rows)||5;
+  mesh.vertices = (data.vertices||[]).map((v)=>({...v})); mesh.triangles = (data.triangles||[]).map((t)=>[...t]); mesh.weights = (data.weights||[]).map((w)=>({...w})); mesh.bindBones = cloneData(data.bindBones||{}); mesh.bindPart = data.bindPart ? {...data.bindPart}:null; mesh.showWire = data.showWire !== false;
+  if (mesh.enabled) hideOriginalPart(true); updatePointerMode(); renderUi(); renderMesh();
 }
 
 function createUi() {
@@ -276,7 +288,8 @@ function createUi() {
     <button class="btn" id="stableMeshUsePart">Use selected part</button>
     <div class="rig-two" style="margin-top:8px"><div class="rig-field"><label>Grid columns</label><input id="stableMeshCols" type="number" min="2" max="16" value="5"></div><div class="rig-field"><label>Grid rows</label><input id="stableMeshRows" type="number" min="2" max="16" value="5"></div></div>
     <div class="rig-two"><button class="btn" id="stableMeshGenerate">Generate grid</button><button class="btn" id="stableMeshAutoWeight">Auto weights</button></div>
-    <label class="rig-check"><span>Wireframe / vertex pick</span><input id="stableMeshWire" type="checkbox" checked></label>
+    <label class="rig-check"><span>Wireframe / pick vertices</span><input id="stableMeshWire" type="checkbox" checked></label>
+    <div class="rig-empty">Turn wireframe off to pass pointer input through to the bone rig.</div>
     <div class="rig-empty" data-mesh-counts>0 vertices · 0 triangles</div>
     <div class="rig-empty" data-mesh-vertex>No vertex selected</div>
     <div class="rig-field"><label>Bone weight</label><select id="stableMeshBone"></select></div><div class="rig-field"><label>Weight 0..1</label><input id="stableMeshWeight" type="number" min="0" max="1" step=".05" value="0"></div>
@@ -288,12 +301,13 @@ function createUi() {
 
   $('#stableMeshUsePart',panel).addEventListener('click',()=>{ try{selectCurrentPart();}catch(error){$('[data-mesh-part]',panel).textContent=error.message;} });
   $('#stableMeshGenerate',panel).addEventListener('click',()=>{ try{if(!activePartId)selectCurrentPart();generateGrid();}catch(error){$('[data-mesh-part]',panel).textContent=error.message;} });
-  $('#stableMeshAutoWeight',panel).addEventListener('click',autoWeights); $('#stableMeshWire',panel).addEventListener('change',(event)=>{mesh.showWire=event.target.checked;renderMesh();});
-  $('#stableMeshBone',panel).addEventListener('change',renderUi); $('#stableMeshApplyWeight',panel).addEventListener('click',updateWeight);
-  $('#stableMeshDisable',panel).addEventListener('click',()=>{mesh.enabled=false;hideOriginalPart(false);renderMesh();renderUi();});
+  $('#stableMeshAutoWeight',panel).addEventListener('click',autoWeights);
+  $('#stableMeshWire',panel).addEventListener('change',(event)=>{mesh.showWire=event.target.checked;updatePointerMode();renderMesh();});
+  $('#stableMeshBone',panel).addEventListener('change',(event)=>{selectedWeightBoneId=event.target.value||null;renderUi();});
+  $('#stableMeshApplyWeight',panel).addEventListener('click',updateWeight);
+  $('#stableMeshDisable',panel).addEventListener('click',()=>{mesh.enabled=false;hideOriginalPart(false);updatePointerMode();renderMesh();renderUi();});
 
   const api = rig(); originalRigDraw = api.draw.bind(api); api.draw = ()=>{originalRigDraw();renderMesh();};
-  rigCanvas.addEventListener('pointermove',()=>{if(mesh.enabled)queueMicrotask(renderMesh);}); rigCanvas.addEventListener('pointerup',()=>{if(mesh.enabled)renderMesh();});
 }
 
 export async function open() {
@@ -301,5 +315,5 @@ export async function open() {
   if (!initialized) {
     initialized=true; createUi(); globalThis.__SSSStableMesh={mesh,serialize,restore,render:renderMesh,generate:generateGrid,autoWeights};
   }
-  document.querySelector('.rig-overlay')?.classList.remove('hidden'); rig().state.open=true; panel.hidden=false; meshCanvas.hidden=false; renderUi(); renderMesh();
+  document.querySelector('.rig-overlay')?.classList.remove('hidden'); rig().state.open=true; panel.hidden=false; meshCanvas.hidden=false; updatePointerMode(); renderUi(); renderMesh();
 }
