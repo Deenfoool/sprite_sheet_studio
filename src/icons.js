@@ -1,5 +1,4 @@
 let initialized = false;
-let renderQueued = false;
 
 const byId = {
   demoBtn: 'sparkles',
@@ -66,19 +65,19 @@ const textRules = [
 
 function normalizePlayButton(button) {
   if (button.id === 'playBtn') {
-    const paused = /pause|❚❚/i.test(button.textContent || '');
+    const paused = /pause|❚❚/i.test(`${button.textContent || ''} ${button.getAttribute('aria-label') || ''}`);
     const label = paused ? 'Pause' : 'Play';
-    if (!button.querySelector('.sss-btn-icon') && button.textContent?.trim() !== label) button.textContent = label;
     button.setAttribute('aria-label', label);
-    return;
-  }
-
-  if (button.id === 'skPlay') {
-    const paused = /❚❚|pause/i.test(button.textContent || '');
+  } else if (button.id === 'skPlay') {
+    const paused = /❚❚|pause/i.test(`${button.textContent || ''} ${button.getAttribute('aria-label') || ''}`);
     const label = paused ? 'Pause skeletal animation' : 'Play skeletal animation';
-    if (!button.querySelector('.sss-btn-icon')) button.textContent = '';
     button.setAttribute('aria-label', label);
     button.title = label;
+  }
+
+  if ((button.id === 'playBtn' || button.id === 'skPlay') && !button.dataset.sssIconRefreshBound) {
+    button.dataset.sssIconRefreshBound = '1';
+    button.addEventListener('click', () => window.setTimeout(renderIcons, 0));
   }
 }
 
@@ -95,21 +94,23 @@ function addButtonIcon(button) {
   normalizePlayButton(button);
   const icon = iconForButton(button);
   const current = button.querySelector('.sss-btn-icon');
+
   if (!icon) {
     current?.remove();
+    delete button.dataset.sssIconApplied;
     button.classList.remove('has-lucide-icon');
     return;
   }
 
-  if (current?.getAttribute('data-sss-icon') === icon) return;
+  if (button.dataset.sssIconApplied === icon && current) return;
   current?.remove();
 
   const node = document.createElement('i');
   node.className = 'sss-btn-icon';
   node.dataset.lucide = icon;
-  node.dataset.sssIcon = icon;
   node.setAttribute('aria-hidden', 'true');
   button.prepend(node);
+  button.dataset.sssIconApplied = icon;
   button.classList.add('has-lucide-icon');
 }
 
@@ -144,7 +145,6 @@ function decorateStaticIcons() {
 }
 
 function renderIcons() {
-  renderQueued = false;
   const lucide = globalThis.lucide;
   if (!lucide?.createIcons) return false;
 
@@ -160,30 +160,25 @@ function renderIcons() {
   return true;
 }
 
-function queueRender() {
-  if (renderQueued) return;
-  renderQueued = true;
-  requestAnimationFrame(renderIcons);
-}
-
 function init() {
   if (initialized) return;
   initialized = true;
 
-  const observer = new MutationObserver(queueRender);
-  observer.observe(document.documentElement, {
-    childList: true,
-    subtree: true,
-    characterData: true
-  });
+  // IMPORTANT: do not observe the whole DOM and call createIcons() from that
+  // observer. Lucide replaces nodes while rendering, which can create a
+  // self-sustaining mutation loop in a dynamic editor and pin the main thread.
+  // All persistent workspaces mount during startup, so a short bounded refresh
+  // window is enough. Dynamic views (for example Command Palette) render their
+  // own Lucide icons explicitly.
+  let attempts = 0;
+  const timer = window.setInterval(() => {
+    attempts += 1;
+    const ready = renderIcons();
+    if ((ready && attempts >= 12) || attempts >= 50) window.clearInterval(timer);
+  }, 100);
 
-  if (!renderIcons()) {
-    const timer = window.setInterval(() => {
-      if (!renderIcons()) return;
-      window.clearInterval(timer);
-    }, 200);
-    window.setTimeout(() => window.clearInterval(timer), 15000);
-  }
+  document.addEventListener('sss:refresh-icons', () => renderIcons());
+  window.setTimeout(renderIcons, 0);
 }
 
 init();
