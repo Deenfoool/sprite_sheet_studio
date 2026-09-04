@@ -1,10 +1,12 @@
 const MODULES = {
-  project: { label: 'Project & Undo', description: 'Undo/redo, multiple animations and .sss save/load.', icon: 'save', file: './stable-project-tools.js?v=20260904-lazy2' },
-  object: { label: 'Object Slice', description: 'Detect irregular sprite objects only when requested.', icon: 'scan-search', file: './stable-object-tools.js?v=20260904-lazy2' },
-  export: { label: 'Export+', description: 'PNG sequence ZIP, atlas JSON and engine-friendly metadata.', icon: 'package-open', file: './stable-export-tools.js?v=20260904-lazy2' },
-  rig: { label: 'Rigging workspace', description: 'Bones and sprite attachments, loaded only when opened.', icon: 'bone', file: './stable-rig-lazy.js?v=20260904-lazy2' },
-  skeletal: { label: 'Skeletal Animation', description: 'Key poses, interpolation and playback on the lazy rig.', icon: 'diamond', file: './stable-skeletal-lazy.js?v=20260904-lazy2' },
-  ik: { label: 'Inverse Kinematics', description: 'Multi-chain two-bone IK with priority, locks and stretch.', icon: 'move-3d', file: './stable-ik-lazy.js?v=20260904-lazy2' }
+  project: { label: 'Project & Undo', description: 'Undo/redo, multiple animations and .sss save/load.', icon: 'save', file: './stable-project-tools.js?v=20260904-lazy3' },
+  cleanup: { label: 'Cleanup+', description: 'Trim all and auto-align all frames on demand.', icon: 'wand-sparkles', file: './stable-cleanup-tools.js?v=20260904-lazy3' },
+  object: { label: 'Object Slice', description: 'Detect irregular sprite objects only when requested.', icon: 'scan-search', file: './stable-object-tools.js?v=20260904-lazy3' },
+  ai: { label: 'AI Fixer Lite', description: 'Local duplicate, broken-frame and loop diagnostics.', icon: 'activity', file: './stable-ai-tools.js?v=20260904-lazy3' },
+  export: { label: 'Export+', description: 'PNG sequence ZIP, atlas JSON and engine-friendly metadata.', icon: 'package-open', file: './stable-export-tools.js?v=20260904-lazy3' },
+  rig: { label: 'Rigging workspace', description: 'Bones and sprite attachments, loaded only when opened.', icon: 'bone', file: './stable-rig-lazy.js?v=20260904-lazy3' },
+  skeletal: { label: 'Skeletal Animation', description: 'Key poses, interpolation and playback on the lazy rig.', icon: 'diamond', file: './stable-skeletal-lazy.js?v=20260904-lazy3' },
+  ik: { label: 'Inverse Kinematics', description: 'Multi-chain two-bone IK with priority, locks and stretch.', icon: 'move-3d', file: './stable-ik-lazy.js?v=20260904-lazy3' }
 };
 
 const loaded = new Map();
